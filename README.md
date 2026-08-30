@@ -23,4 +23,5 @@ riscv64-elf-objdump -d tests/addi.elf
 ## Resources
 
 - https://book.rvemu.app/hardware-components/01-cpu.html
+- https://docs.riscv.org/reference/isa/_attachments/riscv-unprivileged.pdf
 
