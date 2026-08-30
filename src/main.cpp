@@ -1,14 +1,8 @@
-#include <iostream>
-#include <cstdint>
-using namespace std;
-
 #include "CPU.hpp"
 
-int main() {
-	CPU<uint32_t> cpu;
-
+int main(int argc, const char **argv) {
+	CPU<u32> cpu;
 	cpu.printRegisters();
-
 	return 0;
 }
 

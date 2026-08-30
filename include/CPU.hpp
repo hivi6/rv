@@ -150,16 +150,16 @@ public:
 	}
 
 	void printRegisters() {
-		cout << "pc : " << toHex(pc) << endl << endl;
+		std::cout << "pc : " << toHex(pc) << std::endl << std::endl;
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 4; j++) {
 				int reg = i * 4 + j;
-				auto regStr = to_string(reg);
+				auto regStr = std::to_string(reg);
 				if (regStr.size() <= 1) regStr.push_back(' ');
-				cout << "x" << regStr << " : " 
+				std::cout << "x" << regStr << " : " 
 					<< toHex(x[reg]) << " ";
 			}
-			cout << endl;
+			std::cout << std::endl;
 		}
 	}
 
