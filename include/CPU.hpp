@@ -108,6 +108,10 @@ class CPU {
 		writeReg(I::rd(inst), readReg(I::rs1(inst)) ^ I::imm(inst));
 	}
 
+	inline void ori(u32 inst) {
+		writeReg(I::rd(inst), readReg(I::rs1(inst)) | I::imm(inst));
+	}
+
 public:
 	static constexpr u32 xlen() {
 		return sizeof(RegType) * 8;
@@ -133,6 +137,7 @@ public:
 			switch (I::funct3(inst)) {
 			case 0b000: addi(inst); break;
 			case 0b100: xori(inst); break;
+			case 0b110: ori(inst); break;
 			default: return 0;
 			}
 			break;
