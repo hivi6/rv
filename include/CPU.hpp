@@ -1,7 +1,10 @@
 #pragma once
 
+#include <iomanip>
+#include <iostream>
 #include <array>
 #include <cstdint>
+#include <sstream>
 #include <type_traits>
 #include <vector>
 
@@ -84,6 +87,19 @@ class CPU {
 	using S = SType<RegType>;
 	using U = UType<RegType>;
 
+	template <typename T>
+	std::string toHex(T value) {
+		std::ostringstream out;
+
+		out << "0x"
+		    << std::hex
+		    << std::setw(sizeof(T) * 2)
+		    << std::setfill('0')
+		    << value;
+
+		return out.str();
+	}
+
 	inline void addi(u32 inst) {
 		writeReg(I::rd(inst), readReg(I::rs1(inst)) + I::imm(inst));
 	}
@@ -103,15 +119,6 @@ public:
 		}
 	}
 
-	u32 fetch(const std::vector<u8> &dram) {
-		// TODO: Support for both little endian and big endian
-		// Current supporting only little endian
-		return ((u32) dram[pc])
-			| (((u32) dram[pc + 1]) << 8)
-			| (((u32) dram[pc + 2]) << 16)
-			| (((u32) dram[pc + 3]) << 24);
-	}
-
 	char execute(u32 inst) {
 		switch (static_cast<Opcode>(R::opcode(inst))) {
 		case Opcode::OpImm: {
@@ -125,6 +132,35 @@ public:
 		}
 
 		return 1;
+	}
+
+	u32 fetch(const std::vector<u8> &dram) {
+		// TODO: Support for both little endian and big endian
+		// Current supporting only little endian
+		return ((u32) dram[pc])
+			| (((u32) dram[pc + 1]) << 8)
+			| (((u32) dram[pc + 2]) << 16)
+			| (((u32) dram[pc + 3]) << 24);
+	}
+
+	char step(const std::vector<u8> &dram) {
+		auto inst = fetch(dram + pc);
+		pc += 4;
+		return execute(inst);
+	}
+
+	void printRegisters() {
+		cout << "pc : " << toHex(pc) << endl << endl;
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 4; j++) {
+				int reg = i * 4 + j;
+				auto regStr = to_string(reg);
+				if (regStr.size() <= 1) regStr.push_back(' ');
+				cout << "x" << regStr << " : " 
+					<< toHex(x[reg]) << " ";
+			}
+			cout << endl;
+		}
 	}
 
 private:

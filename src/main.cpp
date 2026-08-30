@@ -6,7 +6,8 @@ using namespace std;
 
 int main() {
 	CPU<uint32_t> cpu;
-	cout << "xlen: " << cpu.xlen() << endl;
+
+	cpu.printRegisters();
 
 	return 0;
 }
