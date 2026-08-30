@@ -1,8 +1,48 @@
+#include <fstream>
 #include "CPU.hpp"
 
+std::vector<u8> loadBin(std::string filepath) {
+	std::ifstream file(filepath, std::ios::binary | std::ios::ate);
+	if (!file.is_open()) {
+		std::cerr << "Error opening binary file!" << std::endl;
+		return {};
+	}
+
+	std::streamsize size = file.tellg();
+	file.seekg(0, std::ios::beg);
+
+	std::vector<u8> buffer(size);
+	if (!file.read((char*)buffer.data(), size)) {
+		std::cerr << "Error reading file" << std::endl;
+		return {};
+	}
+
+	return buffer;
+}
+
 int main(int argc, const char **argv) {
+	if (argc <= 1) {
+		std::cerr << "ERROR: Expected rv <filepath>" << std::endl;
+		return 1;
+	}
+
+	std::string filepath(argv[1]);
+	auto dram = loadBin(filepath);
+	std::cout << "Loading file: " << filepath << std::endl << std::endl;
+
 	CPU<u32> cpu;
-	cpu.printRegisters();
+
+	for (int step=1; ; step++) {
+		if (cpu.readPC() >= dram.size()) break;
+
+		std::cout << "STEP: " << step << std::endl;
+		cpu.printRegisters();
+
+		if (!cpu.step(dram)) break;
+
+		std::cout << std::endl;
+	}
+	
 	return 0;
 }
 

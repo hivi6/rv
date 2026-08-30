@@ -109,6 +109,10 @@ public:
 		return sizeof(RegType) * 8;
 	}
 
+	RegType readPC() const {
+		return pc;
+	}
+
 	RegType readReg(u32 reg) const {
 		return x[reg];
 	}
@@ -144,13 +148,13 @@ public:
 	}
 
 	char step(const std::vector<u8> &dram) {
-		auto inst = fetch(dram + pc);
+		auto inst = fetch(dram);
 		pc += 4;
 		return execute(inst);
 	}
 
 	void printRegisters() {
-		std::cout << "pc : " << toHex(pc) << std::endl << std::endl;
+		std::cout << "pc : " << toHex(pc) << std::endl;
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 4; j++) {
 				int reg = i * 4 + j;
