@@ -42,6 +42,8 @@ int main(int argc, const char **argv) {
 
 		std::cout << std::endl;
 	}
+
+	cpu.printRegisters();
 	
 	return 0;
 }

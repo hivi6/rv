@@ -104,6 +104,10 @@ class CPU {
 		writeReg(I::rd(inst), readReg(I::rs1(inst)) + I::imm(inst));
 	}
 
+	inline void xori(u32 inst) {
+		writeReg(I::rd(inst), readReg(I::rs1(inst)) ^ I::imm(inst));
+	}
+
 public:
 	static constexpr u32 xlen() {
 		return sizeof(RegType) * 8;
@@ -128,6 +132,7 @@ public:
 		case Opcode::OpImm: {
 			switch (I::funct3(inst)) {
 			case 0b000: addi(inst); break;
+			case 0b100: xori(inst); break;
 			default: return 0;
 			}
 			break;
