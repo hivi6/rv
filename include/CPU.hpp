@@ -18,7 +18,8 @@ using u64 = std::uint64_t;
 	"CPU only supports u32 or u64");
 
 enum class Opcode : u32 {
-	OpImm = 0x13, // ADDI, SLTI, SLTIU, ANDI, ORI, XORI, SLLI, SRLI, SRAI
+	// ADDI, XORI, ORI, ANDI
+	OpImm = 0b0010011,
 };
 
 template<typename RegType>
