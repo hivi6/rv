@@ -36,10 +36,9 @@ int main(int argc, const char **argv) {
 
 		std::cout << "STEP: " << step << std::endl;
 		cpu.printRegisters();
+		std::cout << std::endl;
 
 		if (!cpu.step(dram)) break;
-
-		std::cout << std::endl;
 	}
 
 	cpu.printRegisters();

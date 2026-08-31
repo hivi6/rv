@@ -112,6 +112,10 @@ class CPU {
 		writeReg(I::rd(inst), readReg(I::rs1(inst)) | I::imm(inst));
 	}
 
+	inline void andi(u32 inst) {
+		writeReg(I::rd(inst), readReg(I::rs1(inst)) & I::imm(inst));
+	}
+
 public:
 	static constexpr u32 xlen() {
 		return sizeof(RegType) * 8;
@@ -138,6 +142,7 @@ public:
 			case 0b000: addi(inst); break;
 			case 0b100: xori(inst); break;
 			case 0b110: ori(inst); break;
+			case 0b111: andi(inst); break;
 			default: return 0;
 			}
 			break;
@@ -160,7 +165,13 @@ public:
 	char step(const std::vector<u8> &dram) {
 		auto inst = fetch(dram);
 		pc += 4;
-		return execute(inst);
+		
+		auto successCode = execute(inst);
+		if (!successCode) {
+			std::cout << "Invalid instruction: " 
+				<< inst << std::endl;
+		}
+		return successCode;
 	}
 
 	void printRegisters() {
