@@ -12,10 +12,9 @@ using u8  = std::uint8_t;
 using u32 = std::uint32_t;
 using u64 = std::uint64_t;
 
-#define CHECK_XLEN_TYPE(type) \
-	static_assert(std::is_same<type, u32>::value || \
-	std::is_same<type, u64>::value, \
-	"CPU only supports u32 or u64");
+template<typename T>
+constexpr bool IsRegType = 
+	(std::is_same<T, u32>::value || std::is_same<T, u64>::value);
 
 enum class Opcode : u32 {
 	// ADDI, XORI, ORI, ANDI, SLLI, SRLI, SRAI
@@ -23,18 +22,14 @@ enum class Opcode : u32 {
 	OpImm = 0b0010011,
 };
 
-template<typename RegType>
+template<typename RegType, typename = std::enable_if_t<IsRegType<RegType>>>
 constexpr RegType signExtend(RegType value, u32 bits) {
-	CHECK_XLEN_TYPE(RegType);
-
 	const RegType signBit = RegType{1} << (bits - 1);
 	return (value ^ signBit) - signBit;
 }
 
-template<typename RegType>
+template<typename RegType, typename = std::enable_if_t<IsRegType<RegType>>>
 struct RType {
-	CHECK_XLEN_TYPE(RegType);
-
 	static constexpr u32 opcode(u32 i) { return i & 0x7f;         }
 	static constexpr u32 rd(u32 i)     { return (i >> 7) & 0x1f;  }
 	static constexpr u32 funct3(u32 i) { return (i >> 12) & 0x07; }
@@ -43,10 +38,8 @@ struct RType {
 	static constexpr u32 funct7(u32 i) { return (i >> 25);        }
 };
 
-template<typename RegType>
+template<typename RegType, typename = std::enable_if_t<IsRegType<RegType>>>
 struct IType {
-	CHECK_XLEN_TYPE(RegType);
-
 	static constexpr u32 opcode(u32 i)   { return i & 0x7f;         }
 	static constexpr u32 rd(u32 i)       { return (i >> 7) & 0x1f;  }
 	static constexpr u32 funct3(u32 i)   { return (i >> 12) & 0x07; }
@@ -65,10 +58,8 @@ struct IType {
 	}
 };
 
-template<typename RegType>
+template<typename RegType, typename = std::enable_if_t<IsRegType<RegType>>>
 struct SType {
-	CHECK_XLEN_TYPE(RegType);
-
 	static constexpr u32 opcode(u32 i) { return i & 0x7f;         }
 	static constexpr u32 funct3(u32 i) { return (i >> 12) & 0x07; }
 	static constexpr u32 rs1(u32 i)    { return (i >> 15) & 0x1f; }
@@ -79,10 +70,8 @@ struct SType {
 	}
 };
 
-template<typename RegType>
+template<typename RegType, typename = std::enable_if_t<IsRegType<RegType>>>
 struct UType {
-	CHECK_XLEN_TYPE(RegType);
-
 	static constexpr u32 opcode(u32 i)  { return i & 0x7f;         }
 	static constexpr u32 rd(u32 i)      { return (i >> 7) & 0x1f;  }
 	static constexpr RegType imm(u32 i) { 
@@ -90,9 +79,8 @@ struct UType {
 	}
 };
 
-template <typename RegType>
+template<typename RegType, typename = std::enable_if_t<IsRegType<RegType>>>
 class CPU {
-	CHECK_XLEN_TYPE(RegType);
 	using R = RType<RegType>;
 	using I = IType<RegType>;
 	using S = SType<RegType>;
