@@ -50,6 +50,9 @@ struct IType {
 	static constexpr u32 rd(u32 i)     { return (i >> 7) & 0x1f;  }
 	static constexpr u32 funct3(u32 i) { return (i >> 12) & 0x07; }
 	static constexpr u32 rs1(u32 i)    { return (i >> 15) & 0x1f; }
+	static constexpr u32 shamt(u32 i)  {
+		return (i >> 20) & ((1 << (sizeof(RegType) == 4 ? 5 : 6)) - 1);
+	}
 	static constexpr RegType imm(u32 i)    {
 		return signExtend<RegType>(i >> 20, 12);
 	}
@@ -117,6 +120,10 @@ class CPU {
 		writeReg(I::rd(inst), readReg(I::rs1(inst)) & I::imm(inst));
 	}
 
+	inline void slli(u32 inst) {
+		writeReg(I::rd(inst), readReg(I::rs1(inst)) << I::shamt(inst));
+	}
+
 public:
 	static constexpr u32 xlen() {
 		return sizeof(RegType) * 8;
@@ -144,6 +151,13 @@ public:
 			case 0b100: xori(inst); break;
 			case 0b110: ori(inst); break;
 			case 0b111: andi(inst); break;
+			case 0b001: {
+				if (I::imm(inst) - I::shamt(inst) == 0) 
+					slli(inst);
+				else
+					return 0; // invalid instruction
+				break;
+			}
 			default: return 0;
 			}
 			break;

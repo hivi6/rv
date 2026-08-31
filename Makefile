@@ -14,9 +14,13 @@ $(FINAL_BIN): $(BUILD_DIR) $(CPP_FILES) $(HPP_FILES)
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
-.PHONY: clean test
+.PHONY: clean test generate
 clean:
 	rm -rf $(BUILD_DIR)
 
 test: $(FINAL_BIN)
 	bash test.sh
+
+generate: $(FINAL_BIN)
+	bash generate-test-output.sh
+
