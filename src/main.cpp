@@ -28,7 +28,6 @@ int main(int argc, const char **argv) {
 
 	std::string filepath(argv[1]);
 	auto dram = loadBin(filepath);
-	std::cout << "Loading file: " << filepath << std::endl << std::endl;
 
 	CPU<u32> cpu;
 
