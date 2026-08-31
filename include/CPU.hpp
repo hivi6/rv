@@ -18,7 +18,7 @@ using u64 = std::uint64_t;
 	"CPU only supports u32 or u64");
 
 enum class Opcode : u32 {
-	// ADDI, XORI, ORI, ANDI
+	// ADDI, XORI, ORI, ANDI, SLLI, SRLI
 	OpImm = 0b0010011,
 };
 
@@ -130,6 +130,10 @@ class CPU {
 		writeReg(I::rd(inst), readReg(I::rs1(inst)) << I::shamt(inst));
 	}
 
+	inline void srli(u32 inst) {
+		writeReg(I::rd(inst), readReg(I::rs1(inst)) >> I::shamt(inst));
+	}
+
 public:
 	static constexpr u32 xlen() {
 		return sizeof(RegType) * 8;
@@ -160,6 +164,13 @@ public:
 			case 0b001: {
 				if (I::shiftType(inst) == 0)
 					slli(inst);
+				else
+					return 0; // invalid instruction
+				break;
+			}
+			case 0b101: {
+				if (I::shiftType(inst) == 0)
+					srli(inst);
 				else
 					return 0; // invalid instruction
 				break;
