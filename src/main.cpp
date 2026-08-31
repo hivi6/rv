@@ -35,13 +35,12 @@ int main(int argc, const char **argv) {
 		if (cpu.readPC() >= dram.size()) break;
 
 		std::cout << "STEP: " << step << std::endl;
+		auto success = cpu.step(dram);
 		cpu.printRegisters();
 		std::cout << std::endl;
 
-		if (!cpu.step(dram)) break;
+		if (!success) break;
 	}
-
-	cpu.printRegisters();
 	
 	return 0;
 }

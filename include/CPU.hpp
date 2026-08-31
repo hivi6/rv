@@ -19,6 +19,7 @@ using u64 = std::uint64_t;
 
 enum class Opcode : u32 {
 	// ADDI, XORI, ORI, ANDI, SLLI, SRLI, SRAI
+	// SLTIU
 	OpImm = 0b0010011,
 };
 
@@ -142,6 +143,10 @@ class CPU {
 			signExtend<RegType>(rs1Val >> shamt, xlen() - shamt));
 	}
 
+	inline void sltiu(u32 inst) {
+		writeReg(I::rd(inst), readReg(I::rs1(inst)) < I::imm(inst));
+	}
+
 public:
 	static constexpr u32 xlen() {
 		return sizeof(RegType) * 8;
@@ -165,10 +170,22 @@ public:
 		switch (static_cast<Opcode>(R::opcode(inst))) {
 		case Opcode::OpImm: {
 			switch (I::funct3(inst)) {
-			case 0b000: addi(inst); break;
-			case 0b100: xori(inst); break;
-			case 0b110: ori(inst); break;
-			case 0b111: andi(inst); break;
+			case 0b000: {
+				addi(inst); 
+				break;
+			}
+			case 0b100: {
+				xori(inst); 
+				break;
+			}
+			case 0b110: {
+				ori(inst); 
+				break;
+			}
+			case 0b111: {
+				andi(inst); 
+				break;
+			}
 			case 0b001: {
 				if (I::shiftType(inst) == 0)
 					slli(inst);
@@ -186,6 +203,10 @@ public:
 					srai(inst);
 				else
 					return 0; // invalid instruction
+				break;
+			}
+			case 0b011: {
+				sltiu(inst); 
 				break;
 			}
 			default: return 0;
@@ -214,7 +235,7 @@ public:
 		auto successCode = execute(inst);
 		if (!successCode) {
 			std::cout << "Invalid instruction: " 
-				<< inst << std::endl;
+				<< toHex(inst) << std::endl;
 		}
 		return successCode;
 	}
