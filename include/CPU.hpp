@@ -46,12 +46,18 @@ template<typename RegType>
 struct IType {
 	CHECK_XLEN_TYPE(RegType);
 
-	static constexpr u32 opcode(u32 i) { return i & 0x7f;         }
-	static constexpr u32 rd(u32 i)     { return (i >> 7) & 0x1f;  }
-	static constexpr u32 funct3(u32 i) { return (i >> 12) & 0x07; }
-	static constexpr u32 rs1(u32 i)    { return (i >> 15) & 0x1f; }
+	static constexpr u32 opcode(u32 i)   { return i & 0x7f;         }
+	static constexpr u32 rd(u32 i)       { return (i >> 7) & 0x1f;  }
+	static constexpr u32 funct3(u32 i)   { return (i >> 12) & 0x07; }
+	static constexpr u32 rs1(u32 i)      { return (i >> 15) & 0x1f; }
+	static constexpr u32 shamtLen() { 
+		return sizeof(RegType) == 4 ? 5 : 6;
+	}
 	static constexpr u32 shamt(u32 i)  {
-		return (i >> 20) & ((1 << (sizeof(RegType) == 4 ? 5 : 6)) - 1);
+		return (i >> 20) & ((u32{1} << shamtLen()) - 1);
+	}
+	static constexpr u32 shiftType(u32 i) {
+		return i >> (20 + shamtLen());
 	}
 	static constexpr RegType imm(u32 i)    {
 		return signExtend<RegType>(i >> 20, 12);
@@ -152,7 +158,7 @@ public:
 			case 0b110: ori(inst); break;
 			case 0b111: andi(inst); break;
 			case 0b001: {
-				if (I::imm(inst) - I::shamt(inst) == 0) 
+				if (I::shiftType(inst) == 0)
 					slli(inst);
 				else
 					return 0; // invalid instruction
