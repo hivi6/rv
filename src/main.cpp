@@ -1,7 +1,8 @@
 #include <fstream>
+
 #include "CPU.hpp"
 
-std::vector<u8> loadBin(std::string filepath) {
+std::vector<riscv::u8> loadBin(std::string filepath) {
 	std::ifstream file(filepath, std::ios::binary | std::ios::ate);
 	if (!file.is_open()) {
 		std::cerr << "Error opening binary file!" << std::endl;
@@ -11,7 +12,7 @@ std::vector<u8> loadBin(std::string filepath) {
 	std::streamsize size = file.tellg();
 	file.seekg(0, std::ios::beg);
 
-	std::vector<u8> buffer(size);
+	std::vector<riscv::u8> buffer(size);
 	if (!file.read((char*)buffer.data(), size)) {
 		std::cerr << "Error reading file" << std::endl;
 		return {};
@@ -29,7 +30,7 @@ int main(int argc, const char **argv) {
 	std::string filepath(argv[1]);
 	auto dram = loadBin(filepath);
 
-	CPU<u32> cpu;
+	riscv::CPU<riscv::u32> cpu;
 
 	for (int step=1; ; step++) {
 		if (cpu.readPC() >= dram.size()) break;

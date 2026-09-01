@@ -8,9 +8,9 @@
 #include <type_traits>
 #include <vector>
 
-using u8  = std::uint8_t;
-using u32 = std::uint32_t;
-using u64 = std::uint64_t;
+#include "types.hpp"
+
+namespace riscv {
 
 template<typename T>
 constexpr bool IsRegType = 
@@ -246,4 +246,6 @@ private:
 	std::array<RegType, 32> x{};
 	RegType pc{};
 };
+
+}
 
