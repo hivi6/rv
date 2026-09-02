@@ -1,0 +1,65 @@
+R32I
+====
+
+- [ ] LUI
+- [ ] AUIPC
+- [ ] JAL
+- [ ] JALR
+- [ ] BEQ
+- [ ] BNE
+- [ ] BLT
+- [ ] BGE
+- [ ] BLTU
+- [ ] BGEU
+- [ ] LB
+- [ ] LH
+- [ ] LW
+- [ ] LBU
+- [ ] LHU
+- [ ] SB
+- [ ] SH
+- [ ] SW
+- [x] ADDI
+- [ ] SLTI
+- [x] SLTIU
+- [x] XORI
+- [x] ORI
+- [x] ANDI
+- [x] SLLI
+- [x] SRLI
+- [x] SRAI
+- [ ] ADD
+- [ ] SUB
+- [ ] SLL
+- [ ] SLT
+- [ ] SLTU
+- [ ] XOR
+- [ ] SRL
+- [ ] SRA
+- [ ] OR
+- [ ] AND
+- [ ] FENCE
+- [ ] FENCE.TSO
+- [ ] PAUSE
+- [ ] ECALL
+- [ ] EBREAK
+
+R64I
+====
+
+- [ ] LWU
+- [ ] LD
+- [ ] SD
+- [ ] SLLI
+- [ ] SRLI
+- [ ] SRAI
+- [ ] ADDIW
+- [ ] SLLIW
+- [ ] SRLIW
+- [ ] SRAIW
+- [ ] ADDW
+- [ ] SUBW
+- [ ] SLLW
+- [ ] SRLW
+- [ ] SRAW
+
