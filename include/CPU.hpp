@@ -5,7 +5,6 @@
 #include <array>
 #include <cstdint>
 #include <sstream>
-#include <type_traits>
 #include <vector>
 
 #include "types.hpp"
@@ -20,14 +19,13 @@ enum class Opcode : u32 {
 	OpImm = 0b0010011,
 };
 
-template<typename RegType, typename = std::enable_if_t<IsRegType<RegType>>>
+template<RegisterType T>
 class CPU {
-	using R = RType<RegType>;
-	using I = IType<RegType>;
-	using S = SType<RegType>;
-	using U = UType<RegType>;
+	using R = RType<T>;
+	using I = IType<T>;
+	using S = SType<T>;
+	using U = UType<T>;
 
-	template <typename T>
 	std::string toHex(T value) {
 		std::ostringstream out;
 
@@ -69,7 +67,7 @@ class CPU {
 		auto shamt = I::shamt(inst);
 
 		writeReg(I::rd(inst), 
-			signExtend<RegType>(rs1Val >> shamt, xlen() - shamt));
+			signExtend<T>(rs1Val >> shamt, xlen() - shamt));
 	}
 
 	inline void sltiu(u32 inst) {
@@ -78,18 +76,18 @@ class CPU {
 
 public:
 	static constexpr u32 xlen() {
-		return sizeof(RegType) * 8;
+		return sizeof(T) * 8;
 	}
 
-	RegType readPC() const {
+	T readPC() const {
 		return pc;
 	}
 
-	RegType readReg(u32 reg) const {
+	T readReg(u32 reg) const {
 		return x[reg];
 	}
 
-	void writeReg(u32 reg, RegType value) {
+	void writeReg(u32 reg, T value) {
 		if (reg != 0) {
 			x[reg] = value;
 		}
@@ -184,8 +182,8 @@ public:
 	}
 
 private:
-	std::array<RegType, 32> x{};
-	RegType pc{};
+	std::array<T, 32> x{};
+	T pc{};
 };
 
 }

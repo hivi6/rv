@@ -4,13 +4,9 @@
 
 namespace riscv {
 
-template<typename T>
-constexpr bool IsRegType = 
-	(std::is_same<T, u32>::value || std::is_same<T, u64>::value);
-
-template<typename RegType, typename = std::enable_if_t<IsRegType<RegType>>>
-constexpr RegType signExtend(RegType value, u32 bits) {
-	const RegType signBit = RegType{1} << (bits - 1);
+template<RegisterType T>
+constexpr T signExtend(T value, u32 bits) {
+	const T signBit = T{1} << (bits - 1);
 	return (value ^ signBit) - signBit;
 }
 
