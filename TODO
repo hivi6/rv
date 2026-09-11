@@ -1,5 +1,11 @@
 # TODOs
 
+## Learn and understand
+
+- [ ] Read the complete specification for unprivileged isa
+  - https://docs.riscv.org/reference/isa/_attachments/riscv-unprivileged.pdf
+  - [ ] Read chapter 1
+
 ## Extras
 
 - [x] Add a decoder
