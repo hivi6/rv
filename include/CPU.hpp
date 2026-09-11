@@ -26,18 +26,6 @@ class CPU {
 	using S = SType<T>;
 	using U = UType<T>;
 
-	std::string toHex(T value) {
-		std::ostringstream out;
-
-		out << "0x"
-		    << std::hex
-		    << std::setw(sizeof(T) * 2)
-		    << std::setfill('0')
-		    << value;
-
-		return out.str();
-	}
-
 	inline void addi(u32 inst) {
 		writeReg(I::rd(inst), readReg(I::rs1(inst)) + I::imm(inst));
 	}
@@ -160,25 +148,7 @@ public:
 		pc += 4;
 		
 		auto successCode = execute(inst);
-		if (!successCode) {
-			std::cout << "Invalid instruction: " 
-				<< toHex(inst) << std::endl;
-		}
 		return successCode;
-	}
-
-	void printRegisters() {
-		std::cout << "pc : " << toHex(pc) << std::endl;
-		for (int i = 0; i < 8; i++) {
-			for (int j = 0; j < 4; j++) {
-				int reg = i * 4 + j;
-				auto regStr = std::to_string(reg);
-				if (regStr.size() <= 1) regStr.push_back(' ');
-				std::cout << "x" << regStr << " : " 
-					<< toHex(x[reg]) << " ";
-			}
-			std::cout << std::endl;
-		}
 	}
 
 private:

@@ -21,6 +21,22 @@ std::vector<riscv::u8> loadBin(std::string filepath) {
 	return buffer;
 }
 
+template<riscv::RegisterType T>
+void printRegisters(const riscv::CPU<T> &cpu) {
+	std::cout << "pc : " << riscv::toHex(cpu.readPC()) << std::endl;
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 4; j++) {
+			int reg = i * 4 + j;
+			auto regStr = std::to_string(reg);
+			if (regStr.size() <= 1) regStr.push_back(' ');
+			std::cout << "x" << regStr << " : " 
+				<< riscv::toHex(cpu.readReg(reg)) << " ";
+		}
+		std::cout << std::endl;
+	}
+}
+
+
 int main(int argc, const char **argv) {
 	if (argc <= 1) {
 		std::cerr << "ERROR: Expected rv <filepath>" << std::endl;
@@ -37,7 +53,7 @@ int main(int argc, const char **argv) {
 
 		std::cout << "STEP: " << step << std::endl;
 		auto success = cpu.step(dram);
-		cpu.printRegisters();
+		printRegisters(cpu);
 		std::cout << std::endl;
 
 		if (!success) break;
