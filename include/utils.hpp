@@ -23,5 +23,10 @@ std::string toHex(T value) {
 	return out.str();
 }
 
+template<RegisterType T>
+constexpr u32 xlen() {
+	return sizeof(T) * 8;
+}
+
 }
 

@@ -1,5 +1,13 @@
-R32I
-====
+# TODOs
+
+## Extras
+
+- [x] Add a decoder
+- [x] Remove print in the CPU.hpp file
+
+## Instruction Support
+
+### R32I
 
 - [ ] LUI
 - [ ] AUIPC
@@ -44,8 +52,7 @@ R32I
 - [ ] ECALL
 - [ ] EBREAK
 
-R64I
-====
+### R64I
 
 - [ ] LWU
 - [ ] LD

@@ -13,60 +13,43 @@
 
 namespace riscv {
 
-enum class Opcode : u32 {
-	// ADDI, XORI, ORI, ANDI, SLLI, SRLI, SRAI
-	// SLTIU
-	OpImm = 0b0010011,
-};
-
 template<RegisterType T>
 class CPU {
-	using R = RType<T>;
-	using I = IType<T>;
-	using S = SType<T>;
-	using U = UType<T>;
-
-	inline void addi(u32 inst) {
-		writeReg(I::rd(inst), readReg(I::rs1(inst)) + I::imm(inst));
+	inline void addi(DecodedInstruction<T> inst) {
+		writeReg(inst.rd, readReg(inst.rs1) + inst.imm);
 	}
 
-	inline void xori(u32 inst) {
-		writeReg(I::rd(inst), readReg(I::rs1(inst)) ^ I::imm(inst));
+	inline void xori(DecodedInstruction<T> inst) {
+		writeReg(inst.rd, readReg(inst.rs1) ^ inst.imm);
 	}
 
-	inline void ori(u32 inst) {
-		writeReg(I::rd(inst), readReg(I::rs1(inst)) | I::imm(inst));
+	inline void ori(DecodedInstruction<T> inst) {
+		writeReg(inst.rd, readReg(inst.rs1) | inst.imm);
 	}
 
-	inline void andi(u32 inst) {
-		writeReg(I::rd(inst), readReg(I::rs1(inst)) & I::imm(inst));
+	inline void andi(DecodedInstruction<T> inst) {
+		writeReg(inst.rd, readReg(inst.rs1) & inst.imm);
 	}
 
-	inline void slli(u32 inst) {
-		writeReg(I::rd(inst), readReg(I::rs1(inst)) << I::shamt(inst));
+	inline void slli(DecodedInstruction<T> inst) {
+		writeReg(inst.rd, readReg(inst.rs1) << inst.shiftAmt);
 	}
 
-	inline void srli(u32 inst) {
-		writeReg(I::rd(inst), readReg(I::rs1(inst)) >> I::shamt(inst));
+	inline void srli(DecodedInstruction<T> inst) {
+		writeReg(inst.rd, readReg(inst.rs1) >> inst.shiftAmt);
 	}
 
-	inline void srai(u32 inst) {
-		auto rs1Val = readReg(I::rs1(inst));
-		auto shamt = I::shamt(inst);
-
-		writeReg(I::rd(inst), 
-			signExtend<T>(rs1Val >> shamt, xlen() - shamt));
+	inline void srai(DecodedInstruction<T> inst) {
+		writeReg(inst.rd, signExtend<T>(
+			readReg(inst.rs1) >> inst.shiftAmt, 
+			xlen<T>() - inst.shiftAmt));
 	}
 
-	inline void sltiu(u32 inst) {
-		writeReg(I::rd(inst), readReg(I::rs1(inst)) < I::imm(inst));
+	inline void sltiu(DecodedInstruction<T> inst) {
+		writeReg(inst.rd, readReg(inst.rs1) < inst.imm);
 	}
 
 public:
-	static constexpr u32 xlen() {
-		return sizeof(T) * 8;
-	}
-
 	T readPC() const {
 		return pc;
 	}
@@ -81,56 +64,35 @@ public:
 		}
 	}
 
-	char execute(u32 inst) {
-		switch (static_cast<Opcode>(R::opcode(inst))) {
-		case Opcode::OpImm: {
-			switch (I::funct3(inst)) {
-			case 0b000: {
-				addi(inst); 
-				break;
-			}
-			case 0b100: {
-				xori(inst); 
-				break;
-			}
-			case 0b110: {
-				ori(inst); 
-				break;
-			}
-			case 0b111: {
-				andi(inst); 
-				break;
-			}
-			case 0b001: {
-				if (I::shiftType(inst) == 0)
-					slli(inst);
-				else
-					return 0; // invalid instruction
-				break;
-			}
-			case 0b101: {
-				if (I::shiftType(inst) == 0)
-					srli(inst);
-				else if ((I::shiftType(inst) == 0b0100000 
-					&& xlen() == 32)
-					|| (I::shiftType(inst) == 0b010000 
-					&& xlen() == 64))
-					srai(inst);
-				else
-					return 0; // invalid instruction
-				break;
-			}
-			case 0b011: {
-				sltiu(inst); 
-				break;
-			}
-			default: return 0;
-			}
+	char execute(DecodedInstruction<T> inst) {
+		switch (inst.type) {
+		case InstructionType::ADDI:
+			addi(inst);
 			break;
+		case InstructionType::XORI:
+			xori(inst);
+			break;
+		case InstructionType::ORI:
+			ori(inst);
+			break;
+		case InstructionType::ANDI:
+			andi(inst);
+			break;
+		case InstructionType::SLLI:
+			slli(inst);
+			break;
+		case InstructionType::SRLI:
+			srli(inst);
+			break;
+		case InstructionType::SRAI:
+			srai(inst);
+			break;
+		case InstructionType::SLTIU:
+			sltiu(inst);
+			break;
+		default:
+			return 0;
 		}
-		default: return 0;
-		}
-
 		return 1;
 	}
 
@@ -144,10 +106,12 @@ public:
 	}
 
 	char step(const std::vector<u8> &dram) {
-		auto inst = fetch(dram);
+		auto rawInst = fetch(dram);
 		pc += 4;
-		
+
+		auto inst = decodeInstruction<T>(rawInst);
 		auto successCode = execute(inst);
+
 		return successCode;
 	}
 
