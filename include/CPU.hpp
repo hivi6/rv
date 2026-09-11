@@ -9,7 +9,7 @@
 
 #include "types.hpp"
 #include "utils.hpp"
-#include "instruction_formats.hpp"
+#include "instruction.hpp"
 
 namespace riscv {
 
