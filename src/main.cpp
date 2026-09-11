@@ -30,7 +30,7 @@ void printRegisters(const riscv::CPU<T> &cpu) {
 			auto regStr = std::to_string(reg);
 			if (regStr.size() <= 1) regStr.push_back(' ');
 			std::cout << "x" << regStr << " : " 
-				<< riscv::toHex(cpu.readReg(reg)) << " ";
+				<< riscv::toHex(cpu.readX(reg)) << " ";
 		}
 		std::cout << std::endl;
 	}

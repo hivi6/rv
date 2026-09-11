@@ -16,37 +16,37 @@ namespace riscv {
 template<RegisterType T>
 class CPU {
 	inline void addi(DecodedInstruction<T> inst) {
-		writeReg(inst.rd, readReg(inst.rs1) + inst.imm);
+		writeReg(inst.rd, readX(inst.rs1) + inst.imm);
 	}
 
 	inline void xori(DecodedInstruction<T> inst) {
-		writeReg(inst.rd, readReg(inst.rs1) ^ inst.imm);
+		writeReg(inst.rd, readX(inst.rs1) ^ inst.imm);
 	}
 
 	inline void ori(DecodedInstruction<T> inst) {
-		writeReg(inst.rd, readReg(inst.rs1) | inst.imm);
+		writeReg(inst.rd, readX(inst.rs1) | inst.imm);
 	}
 
 	inline void andi(DecodedInstruction<T> inst) {
-		writeReg(inst.rd, readReg(inst.rs1) & inst.imm);
+		writeReg(inst.rd, readX(inst.rs1) & inst.imm);
 	}
 
 	inline void slli(DecodedInstruction<T> inst) {
-		writeReg(inst.rd, readReg(inst.rs1) << inst.shiftAmt);
+		writeReg(inst.rd, readX(inst.rs1) << inst.shiftAmt);
 	}
 
 	inline void srli(DecodedInstruction<T> inst) {
-		writeReg(inst.rd, readReg(inst.rs1) >> inst.shiftAmt);
+		writeReg(inst.rd, readX(inst.rs1) >> inst.shiftAmt);
 	}
 
 	inline void srai(DecodedInstruction<T> inst) {
 		writeReg(inst.rd, signExtend<T>(
-			readReg(inst.rs1) >> inst.shiftAmt, 
+			readX(inst.rs1) >> inst.shiftAmt, 
 			xlen<T>() - inst.shiftAmt));
 	}
 
 	inline void sltiu(DecodedInstruction<T> inst) {
-		writeReg(inst.rd, readReg(inst.rs1) < inst.imm);
+		writeReg(inst.rd, readX(inst.rs1) < inst.imm);
 	}
 
 public:
@@ -54,7 +54,7 @@ public:
 		return pc;
 	}
 
-	T readReg(u32 reg) const {
+	T readX(u32 reg) const {
 		return x[reg];
 	}
 
