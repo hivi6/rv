@@ -96,6 +96,67 @@ public:
 		return 1;
 	}
 
+	static DecodedInstruction<T> decodeInstruction(u32 raw) {
+		InstructionType type = InstructionType::INVALID;
+
+		auto opcode = IType<T>::opcode(raw);
+		auto rd = IType<T>::rd(raw);
+		auto rs1 = IType<T>::rs1(raw);
+		auto rs2 = SType<T>::rs2(raw);
+		T imm = 0;
+
+		u32 funct3 = 0;
+		u32 shiftType = 0;
+		u32 shiftAmt = 0;
+
+		// OP-IMM
+		if (opcode == 0b0010011) {
+			imm = IType<T>::imm(raw);
+		
+			funct3 = IType<T>::funct3(raw);
+			shiftType = IType<T>::shiftType(raw);
+			shiftAmt = IType<T>::shiftAmt(raw);
+
+			if (funct3 == 0b000) 
+				type = InstructionType::ADDI;
+			else if (funct3 == 0b100) 
+				type = InstructionType::XORI;
+			else if (funct3 == 0b110) 
+				type = InstructionType::ORI;
+			else if (funct3 == 0b111) 
+				type = InstructionType::ANDI;
+			else if (funct3 == 0b001 && shiftType == 0)
+				type = InstructionType::SLLI;
+			else if (funct3 == 0b101 && shiftType == 0)
+				type = InstructionType::SRLI;
+			else if (funct3 == 0b101) {
+				if (shiftType == 0b0100000 
+					&& xlen<T>() == 32 
+					|| shiftType == 0b010000 
+					&& xlen<T>() == 64)
+					type = InstructionType::SRAI;
+			}
+			else if (funct3 == 0b011)
+				type = InstructionType::SLTIU;
+		}
+
+		return DecodedInstruction<T> {
+			.type = type,
+
+			.raw = raw,
+			.opcode = opcode,
+			.rd = rd,
+			.rs1 = rs1,
+			.rs2 = rs2,
+			.imm = imm,
+
+			.funct3 = funct3,
+			.shiftType = shiftType,
+			.shiftAmt = shiftAmt,
+		};
+	}
+
+
 	u32 fetch(const std::vector<u8> &dram) {
 		// TODO: Support for both little endian and big endian
 		// Current supporting only little endian
@@ -109,7 +170,7 @@ public:
 		auto rawInst = fetch(dram);
 		pc += 4;
 
-		auto inst = decodeInstruction<T>(rawInst);
+		auto inst = decodeInstruction(rawInst);
 		auto successCode = execute(inst);
 
 		return successCode;
