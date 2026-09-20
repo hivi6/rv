@@ -116,6 +116,7 @@ enum class InstructionType {
 	LHU,
 	SB,
 	SH,
+	SW,
 };
 
 template<RegisterType T>

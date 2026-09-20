@@ -32,7 +32,7 @@
 - [x] LHU
 - [x] SB
 - [x] SH
-- [ ] SW
+- [x] SW
 - [x] ADDI
 - [x] SLTI
 - [x] SLTIU
