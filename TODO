@@ -20,7 +20,7 @@
 - [x] JAL
 - [x] JALR
 - [x] BEQ
-- [ ] BNE
+- [x] BNE
 - [ ] BLT
 - [ ] BGE
 - [ ] BLTU
