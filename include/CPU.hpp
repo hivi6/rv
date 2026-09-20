@@ -98,6 +98,18 @@ class CPU {
 		return nextPC;
 	}
 
+	inline std::expected<T, CPUError> jalr(DecodedInstruction<T> inst) {
+		const auto nextPC = (readX(inst.rs1) + inst.imm) & ~T{1};
+		if (nextPC % T{4} != 0) {
+			return std::unexpected(CPUError(
+				CPUErrorType::INSTRUCTION_ADDRESS_MISALIGNED,
+				"JALR target address is not 4-byte aligned"));
+		}
+
+		writeX(inst.rd, pc + 4);
+		return nextPC;
+	}
+
 public:
 	T readPC() const {
 		return pc;
@@ -127,6 +139,7 @@ public:
 		case InstructionType::LUI:   return lui(inst);
 		case InstructionType::AUIPC: return auipc(inst);
 		case InstructionType::JAL:   return jal(inst);
+		case InstructionType::JALR:  return jalr(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -151,7 +164,6 @@ public:
 		u32 shiftType = 0;
 		u32 shiftAmt = 0;
 
-		// OP-IMM
 		if (opcode == 0b0010011) {
 			imm = IType<T>::imm(raw);
 		
@@ -194,6 +206,14 @@ public:
 		else if (opcode == 0b1101111) {
 			imm = JType<T>::imm(raw);
 			type = InstructionType::JAL;
+		}
+		else if (opcode == 0b1100111) {
+			imm = IType<T>::imm(raw);
+		
+			funct3 = IType<T>::funct3(raw);
+
+			if (funct3 == 0b000)
+				type = InstructionType::JALR;
 		}
 
 		return DecodedInstruction<T> {
