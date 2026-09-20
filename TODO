@@ -50,7 +50,7 @@
 - [x] XOR
 - [x] SRL
 - [x] SRA
-- [ ] OR
+- [x] OR
 - [ ] AND
 - [ ] FENCE
 - [ ] FENCE.TSO
