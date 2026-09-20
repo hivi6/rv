@@ -28,49 +28,59 @@ struct CPUError {
 
 template<RegisterType T>
 class CPU {
-	inline void addi(DecodedInstruction<T> inst) {
+	inline T addi(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) + inst.imm);
+		return pc + 4;
 	}
 
-	inline void xori(DecodedInstruction<T> inst) {
+	inline T xori(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) ^ inst.imm);
+		return pc + 4;
 	}
 
-	inline void ori(DecodedInstruction<T> inst) {
+	inline T ori(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) | inst.imm);
+		return pc + 4;
 	}
 
-	inline void andi(DecodedInstruction<T> inst) {
+	inline T andi(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) & inst.imm);
+		return pc + 4;
 	}
 
-	inline void slli(DecodedInstruction<T> inst) {
+	inline T slli(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) << inst.shiftAmt);
+		return pc + 4;
 	}
 
-	inline void srli(DecodedInstruction<T> inst) {
+	inline T srli(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) >> inst.shiftAmt);
+		return pc + 4;
 	}
 
-	inline void srai(DecodedInstruction<T> inst) {
+	inline T srai(DecodedInstruction<T> inst) {
 		writeX(inst.rd, signExtend<T>(
 			readX(inst.rs1) >> inst.shiftAmt, 
 			xlen<T>() - inst.shiftAmt));
+		return pc + 4;
 	}
 
-	inline void sltiu(DecodedInstruction<T> inst) {
+	inline T sltiu(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) < inst.imm);
+		return pc + 4;
 	}
 
-	inline void slti(DecodedInstruction<T> inst) {
+	inline T slti(DecodedInstruction<T> inst) {
 		using signT = std::make_signed_t<T>;
 		const auto lhs = std::bit_cast<signT>(readX(inst.rs1));
 		const auto rhs = std::bit_cast<signT>(inst.imm);
 		writeX(inst.rd, lhs < rhs);
+		return pc + 4;
 	}
 
-	inline void lui(DecodedInstruction<T> inst) {
+	inline T lui(DecodedInstruction<T> inst) {
 		writeX(inst.rd, inst.imm);
+		return pc + 4;
 	}
 
 public:
@@ -88,42 +98,27 @@ public:
 		}
 	}
 
-	char execute(DecodedInstruction<T> inst) {
+	std::expected<T, CPUError> execute(DecodedInstruction<T> inst) {
 		switch (inst.type) {
-		case InstructionType::ADDI:
-			addi(inst);
-			break;
-		case InstructionType::XORI:
-			xori(inst);
-			break;
-		case InstructionType::ORI:
-			ori(inst);
-			break;
-		case InstructionType::ANDI:
-			andi(inst);
-			break;
-		case InstructionType::SLLI:
-			slli(inst);
-			break;
-		case InstructionType::SRLI:
-			srli(inst);
-			break;
-		case InstructionType::SRAI:
-			srai(inst);
-			break;
-		case InstructionType::SLTIU:
-			sltiu(inst);
-			break;
-		case InstructionType::SLTI:
-			slti(inst);
-			break;
-		case InstructionType::LUI:
-			lui(inst);
-			break;
-		default:
-			return 0;
+		case InstructionType::ADDI:  return addi(inst);
+		case InstructionType::XORI:  return xori(inst);
+		case InstructionType::ORI:   return ori(inst);
+		case InstructionType::ANDI:  return andi(inst);
+		case InstructionType::SLLI:  return slli(inst);
+		case InstructionType::SRLI:  return srli(inst);
+		case InstructionType::SRAI:  return srai(inst);
+		case InstructionType::SLTIU: return sltiu(inst);
+		case InstructionType::SLTI:  return slti(inst);
+		case InstructionType::LUI:   return lui(inst);
+		default: {
+			std::string errorMsg = 
+				"instruction couldn't be executed";
+			return std::unexpected(CPUError(
+				CPUErrorType::UNEXECUTED_INSTRUCTION, 
+				errorMsg));
 		}
-		return 1;
+		}
+		return {};
 	}
 
 	static DecodedInstruction<T> decode(u32 raw) {
@@ -213,16 +208,12 @@ public:
 				CPUErrorType::INVALID_INSTRUCTION, errorMsg));
 		}
 
-		auto successCode = execute(inst);
-		if (successCode == 0) {
-			std::string errorMsg = 
-				"instruction couldn't be executed";
-			return std::unexpected(CPUError(
-				CPUErrorType::UNEXECUTED_INSTRUCTION, 
-				errorMsg));
+		auto res = execute(inst);
+		if (!res) {
+			return std::unexpected(res.error());
 		}
 
-		pc += 4;
+		pc = *res;
 
 		return {};
 	}
