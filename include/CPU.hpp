@@ -49,6 +49,13 @@ class CPU {
 		writeReg(inst.rd, readX(inst.rs1) < inst.imm);
 	}
 
+	inline void slti(DecodedInstruction<T> inst) {
+		using signT = std::make_signed_t<T>;
+		const auto lhs = std::bit_cast<signT>(readX(inst.rs1));
+		const auto rhs = std::bit_cast<signT>(inst.imm);
+		writeReg(inst.rd, lhs < rhs);
+	}
+
 public:
 	T readPC() const {
 		return pc;
@@ -89,6 +96,9 @@ public:
 			break;
 		case InstructionType::SLTIU:
 			sltiu(inst);
+			break;
+		case InstructionType::SLTI:
+			slti(inst);
 			break;
 		default:
 			return 0;
@@ -138,6 +148,8 @@ public:
 			}
 			else if (funct3 == 0b011)
 				type = InstructionType::SLTIU;
+			else if (funct3 == 0b010)
+				type = InstructionType::SLTI;
 		}
 
 		return DecodedInstruction<T> {

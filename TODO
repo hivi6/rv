@@ -4,7 +4,7 @@
 
 - [ ] Read the complete specification for unprivileged isa
   - https://docs.riscv.org/reference/isa/_attachments/riscv-unprivileged.pdf
-  - [ ] Read chapter 1
+  - [x] Read chapter 1
 
 ## Extras
 
@@ -34,7 +34,7 @@
 - [ ] SH
 - [ ] SW
 - [x] ADDI
-- [ ] SLTI
+- [x] SLTI
 - [x] SLTIU
 - [x] XORI
 - [x] ORI
@@ -75,4 +75,3 @@
 - [ ] SLLW
 - [ ] SRLW
 - [ ] SRAW
-
