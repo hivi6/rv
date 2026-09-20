@@ -325,6 +325,14 @@ class CPU {
 		return pc + 4;
 	}
 
+	inline std::expected<T, CPUError> slt(DecodedInstruction<T> inst) {
+		using signT = std::make_signed_t<T>;
+		const auto lhs = std::bit_cast<signT>(readX(inst.rs1));
+		const auto rhs = std::bit_cast<signT>(readX(inst.rs2));
+		writeX(inst.rd, lhs < rhs);
+		return pc + 4;
+	}
+
 public:
 	CPU(Bus& b): bus{b} {}
 
@@ -374,6 +382,7 @@ public:
 		case InstructionType::ADD:   return add(inst);
 		case InstructionType::SUB:   return sub(inst);
 		case InstructionType::SLL:   return sll(inst);
+		case InstructionType::SLT:   return slt(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -506,6 +515,8 @@ public:
 				type = InstructionType::SUB;
 			else if (funct3 == 0b001 && funct7 == 0b0000000)
 				type = InstructionType::SLL;
+			else if (funct3 == 0b010 && funct7 == 0b0000000)
+				type = InstructionType::SLT;
 		}
 
 		return DecodedInstruction<T> {

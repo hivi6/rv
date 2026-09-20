@@ -45,7 +45,7 @@
 - [x] ADD
 - [x] SUB
 - [x] SLL
-- [ ] SLT
+- [x] SLT
 - [ ] SLTU
 - [ ] XOR
 - [ ] SRL
