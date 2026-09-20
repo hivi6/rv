@@ -352,6 +352,17 @@ class CPU {
 		return pc + 4;
 	}
 
+	inline std::expected<T, CPUError> sra(DecodedInstruction<T> inst) {
+		// for 32 bits, only last 5 bits are used for shift amount
+		// for 64 bits, onlt last 6 bits are used for shift amount
+		const auto validMask = xlen<T>() - 1;
+		const auto shamt = readX(inst.rs2) & validMask;
+		const auto res = readX(inst.rs1) >> shamt;
+		const auto signEx = signExtend<T>(res, xlen<T>() - shamt);
+		writeX(inst.rd, signEx);
+		return pc + 4;
+	}
+
 public:
 	CPU(Bus& b): bus{b} {}
 
@@ -405,6 +416,7 @@ public:
 		case InstructionType::SLTU:  return sltu(inst);
 		case InstructionType::XOR:   return _xor(inst);
 		case InstructionType::SRL:   return srl(inst);
+		case InstructionType::SRA:   return sra(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -545,6 +557,8 @@ public:
 				type = InstructionType::XOR;
 			else if (funct3 == 0b101 && funct7 == 0b0000000)
 				type = InstructionType::SRL;
+			else if (funct3 == 0b101 && funct7 == 0b0100000)
+				type = InstructionType::SRA;
 		}
 
 		return DecodedInstruction<T> {

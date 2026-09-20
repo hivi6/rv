@@ -124,6 +124,7 @@ enum class InstructionType {
 	SLTU,
 	XOR,
 	SRL,
+	SRA,
 };
 
 template<RegisterType T>
