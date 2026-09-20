@@ -136,6 +136,21 @@ class CPU {
 		return nextPC;
 	}
 
+	inline std::expected<T, CPUError> blt(DecodedInstruction<T> inst) {
+		using signT = std::make_signed_t<T>;
+		const auto lhs = std::bit_cast<signT>(readX(inst.rs1));
+		const auto rhs = std::bit_cast<signT>(readX(inst.rs2));
+		const auto nextPC = (lhs < rhs ? pc + inst.imm : pc + 4);
+
+		if (nextPC % T{4} != 0) {
+			return std::unexpected(CPUError(
+				CPUErrorType::INSTRUCTION_ADDRESS_MISALIGNED,
+				"BLT target address is not 4-byte aligned"));
+		}
+
+		return nextPC;
+	}
+
 public:
 	T readPC() const {
 		return pc;
@@ -168,6 +183,7 @@ public:
 		case InstructionType::JALR:  return jalr(inst);
 		case InstructionType::BEQ:   return beq(inst);
 		case InstructionType::BNE:   return bne(inst);
+		case InstructionType::BLT:   return blt(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -252,6 +268,8 @@ public:
 				type = InstructionType::BEQ;
 			else if (funct3 == 0b001)
 				type = InstructionType::BNE;
+			else if (funct3 == 0b100)
+				type = InstructionType::BLT;
 		}
 
 		return DecodedInstruction<T> {

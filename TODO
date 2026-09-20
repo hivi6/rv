@@ -21,7 +21,7 @@
 - [x] JALR
 - [x] BEQ
 - [x] BNE
-- [ ] BLT
+- [x] BLT
 - [ ] BGE
 - [ ] BLTU
 - [ ] BGEU

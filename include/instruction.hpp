@@ -105,6 +105,7 @@ enum class InstructionType {
 	JALR,
 	BEQ,
 	BNE,
+	BLT,
 };
 
 template<RegisterType T>
