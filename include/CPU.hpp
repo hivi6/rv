@@ -311,6 +311,11 @@ class CPU {
 		return pc + 4;
 	}
 
+	inline std::expected<T, CPUError> sub(DecodedInstruction<T> inst) {
+		writeX(inst.rd, readX(inst.rs1) - readX(inst.rs2));
+		return pc + 4;
+	}
+
 public:
 	CPU(Bus& b): bus{b} {}
 
@@ -358,6 +363,7 @@ public:
 		case InstructionType::SLTIU: return sltiu(inst);
 		case InstructionType::SLTI:  return slti(inst);
 		case InstructionType::ADD:   return add(inst);
+		case InstructionType::SUB:   return sub(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -486,6 +492,8 @@ public:
 
 			if (funct3 == 0b000 && funct7 == 0b0000000)
 				type = InstructionType::ADD;
+			else if (funct3 == 0b000 && funct7 == 0b0100000)
+				type = InstructionType::SUB;
 		}
 
 		return DecodedInstruction<T> {
