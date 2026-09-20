@@ -56,6 +56,21 @@ struct UType {
 	}
 };
 
+template<RegisterType T>
+struct JType {
+	static constexpr u32 opcode(u32 i) { return i & 0x7f; }
+	static constexpr u32 rd(u32 i)     { return (i >> 7) & 0x1f;  }
+	static constexpr T imm(u32 i) {
+		const auto imm_10_1  = (i >> 21) & 0b1111111111;
+		const auto imm_20    = (i >> 31) & 0b1;
+		const auto imm_11    = (i >> 20) & 0b1;
+		const auto imm_19_12 = (i >> 12) & 0b11111111;
+		const auto res = (imm_20 << 20) | (imm_19_12 << 12)
+			| (imm_11 << 11) | (imm_10_1 << 1);
+		return signExtend<T>(res, 21);
+	}
+};
+
 enum class InstructionType {
 	INVALID = 0, // custom instruction if there is something wrong
 	ADDI, 
