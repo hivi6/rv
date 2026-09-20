@@ -180,6 +180,20 @@ class CPU {
 		return nextPC;
 	}
 
+	inline std::expected<T, CPUError> bgeu(DecodedInstruction<T> inst) {
+		const auto lhs = readX(inst.rs1);
+		const auto rhs = readX(inst.rs2);
+		const auto nextPC = (lhs >= rhs ? pc + inst.imm : pc + 4);
+
+		if (nextPC % T{4} != 0) {
+			return std::unexpected(CPUError(
+				CPUErrorType::INSTRUCTION_ADDRESS_MISALIGNED,
+				"BGEU target address is not 4-byte aligned"));
+		}
+
+		return nextPC;
+	}
+
 public:
 	T readPC() const {
 		return pc;
@@ -215,6 +229,7 @@ public:
 		case InstructionType::BLT:   return blt(inst);
 		case InstructionType::BGE:   return bge(inst);
 		case InstructionType::BLTU:  return bltu(inst);
+		case InstructionType::BGEU:  return bgeu(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -305,6 +320,8 @@ public:
 				type = InstructionType::BGE;
 			else if (funct3 == 0b110)
 				type = InstructionType::BLTU;
+			else if (funct3 == 0b111)
+				type = InstructionType::BGEU;
 		}
 
 		return DecodedInstruction<T> {
