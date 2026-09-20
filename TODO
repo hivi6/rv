@@ -23,7 +23,7 @@
 - [x] BNE
 - [x] BLT
 - [x] BGE
-- [ ] BLTU
+- [x] BLTU
 - [ ] BGEU
 - [ ] LB
 - [ ] LH
