@@ -16,7 +16,7 @@ std::vector<riscv::u8> loadBin(std::string filepath) {
 	std::vector<riscv::u8> buffer(size);
 	if (!file.read((char*)buffer.data(), size)) {
 		std::cerr << "Error reading file" << std::endl;
-		return {};
+		exit(1);
 	}
 
 	return buffer;
@@ -57,6 +57,7 @@ int main(int argc, const char **argv) {
 		if (!success) {
 			auto err = success.error();
 			std::cerr << "ERROR: " << err.msg << std::endl;
+			return 1;
 		}
 
 		printRegisters(cpu);
