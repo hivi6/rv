@@ -90,15 +90,6 @@ struct JType {
 
 enum class InstructionType {
 	INVALID = 0, // custom instruction if there is something wrong
-	ADDI, 
-	XORI, 
-	ORI, 
-	ANDI, 
-	SLLI, 
-	SRLI, 
-	SRAI,
-	SLTIU,
-	SLTI,
 	LUI,
 	AUIPC,
 	JAL,
@@ -117,6 +108,15 @@ enum class InstructionType {
 	SB,
 	SH,
 	SW,
+	ADDI, 
+	XORI, 
+	ORI, 
+	ANDI, 
+	SLLI, 
+	SRLI, 
+	SRAI,
+	SLTIU,
+	SLTI,
 };
 
 template<RegisterType T>

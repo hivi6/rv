@@ -35,56 +35,6 @@ struct CPUError {
 
 template<RegisterType T>
 class CPU {
-	inline std::expected<T, CPUError> addi(DecodedInstruction<T> inst) {
-		writeX(inst.rd, readX(inst.rs1) + inst.imm);
-		return pc + 4;
-	}
-
-	inline std::expected<T, CPUError> xori(DecodedInstruction<T> inst) {
-		writeX(inst.rd, readX(inst.rs1) ^ inst.imm);
-		return pc + 4;
-	}
-
-	inline std::expected<T, CPUError> ori(DecodedInstruction<T> inst) {
-		writeX(inst.rd, readX(inst.rs1) | inst.imm);
-		return pc + 4;
-	}
-
-	inline std::expected<T, CPUError> andi(DecodedInstruction<T> inst) {
-		writeX(inst.rd, readX(inst.rs1) & inst.imm);
-		return pc + 4;
-	}
-
-	inline std::expected<T, CPUError> slli(DecodedInstruction<T> inst) {
-		writeX(inst.rd, readX(inst.rs1) << inst.shiftAmt);
-		return pc + 4;
-	}
-
-	inline std::expected<T, CPUError> srli(DecodedInstruction<T> inst) {
-		writeX(inst.rd, readX(inst.rs1) >> inst.shiftAmt);
-		return pc + 4;
-	}
-
-	inline std::expected<T, CPUError> srai(DecodedInstruction<T> inst) {
-		writeX(inst.rd, signExtend<T>(
-			readX(inst.rs1) >> inst.shiftAmt, 
-			xlen<T>() - inst.shiftAmt));
-		return pc + 4;
-	}
-
-	inline std::expected<T, CPUError> sltiu(DecodedInstruction<T> inst) {
-		writeX(inst.rd, readX(inst.rs1) < inst.imm);
-		return pc + 4;
-	}
-
-	inline std::expected<T, CPUError> slti(DecodedInstruction<T> inst) {
-		using signT = std::make_signed_t<T>;
-		const auto lhs = std::bit_cast<signT>(readX(inst.rs1));
-		const auto rhs = std::bit_cast<signT>(inst.imm);
-		writeX(inst.rd, lhs < rhs);
-		return pc + 4;
-	}
-
 	inline std::expected<T, CPUError> lui(DecodedInstruction<T> inst) {
 		writeX(inst.rd, inst.imm);
 		return pc + 4;
@@ -306,6 +256,56 @@ class CPU {
 		return pc + 4;
 	}
 
+	inline std::expected<T, CPUError> addi(DecodedInstruction<T> inst) {
+		writeX(inst.rd, readX(inst.rs1) + inst.imm);
+		return pc + 4;
+	}
+
+	inline std::expected<T, CPUError> xori(DecodedInstruction<T> inst) {
+		writeX(inst.rd, readX(inst.rs1) ^ inst.imm);
+		return pc + 4;
+	}
+
+	inline std::expected<T, CPUError> ori(DecodedInstruction<T> inst) {
+		writeX(inst.rd, readX(inst.rs1) | inst.imm);
+		return pc + 4;
+	}
+
+	inline std::expected<T, CPUError> andi(DecodedInstruction<T> inst) {
+		writeX(inst.rd, readX(inst.rs1) & inst.imm);
+		return pc + 4;
+	}
+
+	inline std::expected<T, CPUError> slli(DecodedInstruction<T> inst) {
+		writeX(inst.rd, readX(inst.rs1) << inst.shiftAmt);
+		return pc + 4;
+	}
+
+	inline std::expected<T, CPUError> srli(DecodedInstruction<T> inst) {
+		writeX(inst.rd, readX(inst.rs1) >> inst.shiftAmt);
+		return pc + 4;
+	}
+
+	inline std::expected<T, CPUError> srai(DecodedInstruction<T> inst) {
+		writeX(inst.rd, signExtend<T>(
+			readX(inst.rs1) >> inst.shiftAmt, 
+			xlen<T>() - inst.shiftAmt));
+		return pc + 4;
+	}
+
+	inline std::expected<T, CPUError> sltiu(DecodedInstruction<T> inst) {
+		writeX(inst.rd, readX(inst.rs1) < inst.imm);
+		return pc + 4;
+	}
+
+	inline std::expected<T, CPUError> slti(DecodedInstruction<T> inst) {
+		using signT = std::make_signed_t<T>;
+		const auto lhs = std::bit_cast<signT>(readX(inst.rs1));
+		const auto rhs = std::bit_cast<signT>(inst.imm);
+		writeX(inst.rd, lhs < rhs);
+		return pc + 4;
+	}
+
 public:
 	CPU(Bus& b): bus{b} {}
 
@@ -325,15 +325,6 @@ public:
 
 	std::expected<T, CPUError> execute(DecodedInstruction<T> inst) {
 		switch (inst.type) {
-		case InstructionType::ADDI:  return addi(inst);
-		case InstructionType::XORI:  return xori(inst);
-		case InstructionType::ORI:   return ori(inst);
-		case InstructionType::ANDI:  return andi(inst);
-		case InstructionType::SLLI:  return slli(inst);
-		case InstructionType::SRLI:  return srli(inst);
-		case InstructionType::SRAI:  return srai(inst);
-		case InstructionType::SLTIU: return sltiu(inst);
-		case InstructionType::SLTI:  return slti(inst);
 		case InstructionType::LUI:   return lui(inst);
 		case InstructionType::AUIPC: return auipc(inst);
 		case InstructionType::JAL:   return jal(inst);
@@ -352,6 +343,15 @@ public:
 		case InstructionType::SB:    return sb(inst);
 		case InstructionType::SH:    return sh(inst);
 		case InstructionType::SW:    return sw(inst);
+		case InstructionType::ADDI:  return addi(inst);
+		case InstructionType::XORI:  return xori(inst);
+		case InstructionType::ORI:   return ori(inst);
+		case InstructionType::ANDI:  return andi(inst);
+		case InstructionType::SLLI:  return slli(inst);
+		case InstructionType::SRLI:  return srli(inst);
+		case InstructionType::SRAI:  return srai(inst);
+		case InstructionType::SLTIU: return sltiu(inst);
+		case InstructionType::SLTI:  return slti(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -376,38 +376,7 @@ public:
 		u32 shiftType = 0;
 		u32 shiftAmt = 0;
 
-		if (opcode == 0b0010011) {
-			imm = IType<T>::imm(raw);
-		
-			funct3 = IType<T>::funct3(raw);
-			shiftType = IType<T>::shiftType(raw);
-			shiftAmt = IType<T>::shiftAmt(raw);
-
-			if (funct3 == 0b000) 
-				type = InstructionType::ADDI;
-			else if (funct3 == 0b100) 
-				type = InstructionType::XORI;
-			else if (funct3 == 0b110) 
-				type = InstructionType::ORI;
-			else if (funct3 == 0b111) 
-				type = InstructionType::ANDI;
-			else if (funct3 == 0b001 && shiftType == 0)
-				type = InstructionType::SLLI;
-			else if (funct3 == 0b101 && shiftType == 0)
-				type = InstructionType::SRLI;
-			else if (funct3 == 0b101) {
-				if (shiftType == 0b0100000 
-					&& xlen<T>() == 32 
-					|| shiftType == 0b010000 
-					&& xlen<T>() == 64)
-					type = InstructionType::SRAI;
-			}
-			else if (funct3 == 0b011)
-				type = InstructionType::SLTIU;
-			else if (funct3 == 0b010)
-				type = InstructionType::SLTI;
-		}
-		else if (opcode == 0b0110111) {
+		if (opcode == 0b0110111) {
 			imm = UType<T>::imm(raw);
 			type = InstructionType::LUI;
 		}
@@ -472,6 +441,37 @@ public:
 				type = InstructionType::SH;
 			else if (funct3 == 0b010)
 				type = InstructionType::SW;
+		}
+		if (opcode == 0b0010011) {
+			imm = IType<T>::imm(raw);
+		
+			funct3 = IType<T>::funct3(raw);
+			shiftType = IType<T>::shiftType(raw);
+			shiftAmt = IType<T>::shiftAmt(raw);
+
+			if (funct3 == 0b000) 
+				type = InstructionType::ADDI;
+			else if (funct3 == 0b100) 
+				type = InstructionType::XORI;
+			else if (funct3 == 0b110) 
+				type = InstructionType::ORI;
+			else if (funct3 == 0b111) 
+				type = InstructionType::ANDI;
+			else if (funct3 == 0b001 && shiftType == 0)
+				type = InstructionType::SLLI;
+			else if (funct3 == 0b101 && shiftType == 0)
+				type = InstructionType::SRLI;
+			else if (funct3 == 0b101) {
+				if (shiftType == 0b0100000 
+					&& xlen<T>() == 32 
+					|| shiftType == 0b010000 
+					&& xlen<T>() == 64)
+					type = InstructionType::SRAI;
+			}
+			else if (funct3 == 0b011)
+				type = InstructionType::SLTIU;
+			else if (funct3 == 0b010)
+				type = InstructionType::SLTI;
 		}
 
 		return DecodedInstruction<T> {
