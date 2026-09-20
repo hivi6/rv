@@ -373,6 +373,32 @@ class CPU {
 		return pc + 4;
 	}
 
+	inline std::expected<T, CPUError> fence(DecodedInstruction<T> inst) {
+		// WORKAROUND: as we are just implementing a single threaded
+		// syncronise emulator so fence instructions are not required
+		// as by default memory consistency is guaranteed. Therefore,
+		// FENCE, FENCE.TSO, PAUSE are just increment operation
+		//
+		// Resources:
+		// - "Chapter 2" https://docs.riscv.org/reference/isa/_attachments/riscv-unprivileged.pdf
+		//   To quote: 'The ISA was also designed to reduce the hardware 
+		//   required in a minimal implementation. RV32I contains 40 
+		//   unique instructions, though a simple implementation might 
+		//   cover the ECALL/EBREAK instructions with a single SYSTEM 
+		//   hardware instruction that always traps and might be able 
+		//   to implement the FENCE instruction as a NOP, reducing base 
+		//   instruction count to 38 total.'
+		return pc + 4;
+	}
+
+	inline std::expected<T, CPUError> fenceTso(DecodedInstruction<T> inst) {
+		return pc + 4;
+	}
+
+	inline std::expected<T, CPUError> pause(DecodedInstruction<T> inst) {
+		return pc + 4;
+	}
+
 public:
 	CPU(Bus& b): bus{b} {}
 
@@ -392,43 +418,46 @@ public:
 
 	std::expected<T, CPUError> execute(DecodedInstruction<T> inst) {
 		switch (inst.type) {
-		case InstructionType::LUI:   return lui(inst);
-		case InstructionType::AUIPC: return auipc(inst);
-		case InstructionType::JAL:   return jal(inst);
-		case InstructionType::JALR:  return jalr(inst);
-		case InstructionType::BEQ:   return beq(inst);
-		case InstructionType::BNE:   return bne(inst);
-		case InstructionType::BLT:   return blt(inst);
-		case InstructionType::BGE:   return bge(inst);
-		case InstructionType::BLTU:  return bltu(inst);
-		case InstructionType::BGEU:  return bgeu(inst);
-		case InstructionType::LB:    return lb(inst);
-		case InstructionType::LH:    return lh(inst);
-		case InstructionType::LW:    return lw(inst);
-		case InstructionType::LBU:   return lbu(inst);
-		case InstructionType::LHU:   return lhu(inst);
-		case InstructionType::SB:    return sb(inst);
-		case InstructionType::SH:    return sh(inst);
-		case InstructionType::SW:    return sw(inst);
-		case InstructionType::ADDI:  return addi(inst);
-		case InstructionType::XORI:  return xori(inst);
-		case InstructionType::ORI:   return ori(inst);
-		case InstructionType::ANDI:  return andi(inst);
-		case InstructionType::SLLI:  return slli(inst);
-		case InstructionType::SRLI:  return srli(inst);
-		case InstructionType::SRAI:  return srai(inst);
-		case InstructionType::SLTIU: return sltiu(inst);
-		case InstructionType::SLTI:  return slti(inst);
-		case InstructionType::ADD:   return add(inst);
-		case InstructionType::SUB:   return sub(inst);
-		case InstructionType::SLL:   return sll(inst);
-		case InstructionType::SLT:   return slt(inst);
-		case InstructionType::SLTU:  return sltu(inst);
-		case InstructionType::XOR:   return _xor(inst);
-		case InstructionType::SRL:   return srl(inst);
-		case InstructionType::SRA:   return sra(inst);
-		case InstructionType::OR:    return _or(inst);
-		case InstructionType::AND:   return _and(inst);
+		case InstructionType::LUI:       return lui(inst);
+		case InstructionType::AUIPC:     return auipc(inst);
+		case InstructionType::JAL:       return jal(inst);
+		case InstructionType::JALR:      return jalr(inst);
+		case InstructionType::BEQ:       return beq(inst);
+		case InstructionType::BNE:       return bne(inst);
+		case InstructionType::BLT:       return blt(inst);
+		case InstructionType::BGE:       return bge(inst);
+		case InstructionType::BLTU:      return bltu(inst);
+		case InstructionType::BGEU:      return bgeu(inst);
+		case InstructionType::LB:        return lb(inst);
+		case InstructionType::LH:        return lh(inst);
+		case InstructionType::LW:        return lw(inst);
+		case InstructionType::LBU:       return lbu(inst);
+		case InstructionType::LHU:       return lhu(inst);
+		case InstructionType::SB:        return sb(inst);
+		case InstructionType::SH:        return sh(inst);
+		case InstructionType::SW:        return sw(inst);
+		case InstructionType::ADDI:      return addi(inst);
+		case InstructionType::XORI:      return xori(inst);
+		case InstructionType::ORI:       return ori(inst);
+		case InstructionType::ANDI:      return andi(inst);
+		case InstructionType::SLLI:      return slli(inst);
+		case InstructionType::SRLI:      return srli(inst);
+		case InstructionType::SRAI:      return srai(inst);
+		case InstructionType::SLTIU:     return sltiu(inst);
+		case InstructionType::SLTI:      return slti(inst);
+		case InstructionType::ADD:       return add(inst);
+		case InstructionType::SUB:       return sub(inst);
+		case InstructionType::SLL:       return sll(inst);
+		case InstructionType::SLT:       return slt(inst);
+		case InstructionType::SLTU:      return sltu(inst);
+		case InstructionType::XOR:       return _xor(inst);
+		case InstructionType::SRL:       return srl(inst);
+		case InstructionType::SRA:       return sra(inst);
+		case InstructionType::OR:        return _or(inst);
+		case InstructionType::AND:       return _and(inst);
+		case InstructionType::FENCE:     return fence(inst);
+		case InstructionType::FENCE_TSO: return fenceTso(inst);
+		case InstructionType::PAUSE:     return pause(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -575,6 +604,24 @@ public:
 				type = InstructionType::OR;
 			else if (funct3 == 0b111 && funct7 == 0b0000000)
 				type = InstructionType::AND;
+		}
+		else if (opcode == 0b0001111) {
+			funct3 = IType<T>::funct3(raw);
+
+			if (funct3 == 0b000) {
+				const auto fm = (raw >> 28);
+				const auto pred = (raw >> 24) & 0b1111;
+				const auto succ = (raw >> 20) & 0b1111;
+
+				type = InstructionType::FENCE;
+
+				if (fm == 0b1000 && pred == 0b0011 
+					&& succ == 0b0011 && rs1 == 0b00000)
+					type = InstructionType::FENCE_TSO;
+				else if (fm == 0b0000 && pred == 0b0001
+					&& succ == 0b0000 && rs1 == 0b00000)
+					type = InstructionType::PAUSE;
+			}
 		}
 
 		return DecodedInstruction<T> {

@@ -127,6 +127,9 @@ enum class InstructionType {
 	SRA,
 	OR,
 	AND,
+	FENCE,
+	FENCE_TSO,
+	PAUSE,
 };
 
 template<RegisterType T>

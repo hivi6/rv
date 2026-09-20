@@ -52,9 +52,9 @@
 - [x] SRA
 - [x] OR
 - [x] AND
-- [ ] FENCE
-- [ ] FENCE.TSO
-- [ ] PAUSE
+- [x] FENCE
+- [x] FENCE.TSO
+- [x] PAUSE
 - [ ] ECALL
 - [ ] EBREAK
 
