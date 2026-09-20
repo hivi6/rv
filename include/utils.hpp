@@ -1,5 +1,7 @@
 #pragma once
 
+#include <sstream>
+
 #include "types.hpp"
 
 namespace riscv {
