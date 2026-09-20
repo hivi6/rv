@@ -23,6 +23,7 @@ enum class CPUErrorType {
 	UNEXECUTED_INSTRUCTION,
 	INSTRUCTION_ADDRESS_MISALIGNED,
 	LOAD_ACCESS_FAULT,
+	STORE_ACCESS_FAULT,
 };
 
 struct CPUError {
@@ -272,6 +273,17 @@ class CPU {
 		return pc + 4;
 	}
 
+	inline std::expected<T, CPUError> sb(DecodedInstruction<T> inst) {
+		const auto address = readX(inst.rs1) + inst.imm;
+		auto busStore = bus.store<u8>(address, readX(inst.rs2));
+		if (!busStore) {
+			return std::unexpected(CPUError(
+				CPUErrorType::STORE_ACCESS_FAULT,
+				"SB target address couldn't be stored"));
+		}
+		return pc + 4;
+	}
+
 public:
 	CPU(Bus& b): bus{b} {}
 
@@ -315,6 +327,7 @@ public:
 		case InstructionType::LW:    return lw(inst);
 		case InstructionType::LBU:   return lbu(inst);
 		case InstructionType::LHU:   return lhu(inst);
+		case InstructionType::SB:    return sb(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -423,6 +436,14 @@ public:
 				type = InstructionType::LBU;
 			else if (funct3 == 0b101)
 				type = InstructionType::LHU;
+		}
+		else if (opcode == 0b0100011) {
+			imm = SType<T>::imm(raw);
+
+			funct3 = SType<T>::funct3(raw);
+
+			if (funct3 == 0b000)
+				type = InstructionType::SB;
 		}
 
 		return DecodedInstruction<T> {
