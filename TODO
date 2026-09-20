@@ -18,7 +18,7 @@
 - [x] LUI
 - [x] AUIPC
 - [x] JAL
-- [ ] JALR
+- [x] JALR
 - [ ] BEQ
 - [ ] BNE
 - [ ] BLT
