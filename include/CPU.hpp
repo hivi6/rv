@@ -25,6 +25,7 @@ enum class CPUErrorType {
 	LOAD_ACCESS_FAULT,
 	STORE_ACCESS_FAULT,
 	ENVIRONMENT_CALL,
+	ENVIRONMENT_BREAK,
 };
 
 struct CPUError {
@@ -409,6 +410,15 @@ class CPU {
 			"Environment call"));
 	}
 
+	inline std::expected<T, CPUError> ebreak(DecodedInstruction<T> inst) {
+		// TODO: to implement ebreak, we need to make sure to implement
+		// the previledge mode instructions, for now just returning
+		// an error
+		return std::unexpected(CPUError(
+			CPUErrorType::ENVIRONMENT_BREAK,
+			"Environment break"));
+	}
+
 public:
 	CPU(Bus& b): bus{b} {}
 
@@ -469,6 +479,7 @@ public:
 		case InstructionType::FENCE_TSO: return fenceTso(inst);
 		case InstructionType::PAUSE:     return pause(inst);
 		case InstructionType::ECALL:     return ecall(inst);
+		case InstructionType::EBREAK:    return ebreak(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -642,6 +653,9 @@ public:
 			if (imm == 0b000000000000 && rs1 == 0b00000 &&
 				funct3 == 0b000 && rd == 0b00000)
 				type = InstructionType::ECALL;
+			if (imm == 0b000000000001 && rs1 == 0b00000 &&
+				funct3 == 0b000 && rd == 0b00000)
+				type = InstructionType::EBREAK;
 		}
 
 		return DecodedInstruction<T> {
