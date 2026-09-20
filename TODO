@@ -27,8 +27,8 @@
 - [x] BGEU
 - [x] LB
 - [x] LH
-- [ ] LW
-- [ ] LBU
+- [x] LW
+- [x] LBU
 - [ ] LHU
 - [ ] SB
 - [ ] SH

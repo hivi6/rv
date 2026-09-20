@@ -230,6 +230,34 @@ class CPU {
 		return pc + 4;
 	}
 
+	inline std::expected<T, CPUError> lw(DecodedInstruction<T> inst) {
+		const auto address = readX(inst.rs1) + inst.imm;
+		auto busLoad = bus.load<u32>(address);
+		if (!busLoad) {
+			return std::unexpected(CPUError(
+				CPUErrorType::LOAD_ACCESS_FAULT,
+				"LW target address couldn't be loaded"));
+		}
+
+		const auto res = signExtend<T>(T{*busLoad}, 32);
+		writeX(inst.rd, res);
+		return pc + 4;
+	}
+
+	inline std::expected<T, CPUError> lbu(DecodedInstruction<T> inst) {
+		const auto address = readX(inst.rs1) + inst.imm;
+		auto busLoad = bus.load<u8>(address);
+		if (!busLoad) {
+			return std::unexpected(CPUError(
+				CPUErrorType::LOAD_ACCESS_FAULT,
+				"LBU target address couldn't be loaded"));
+		}
+
+		const auto res = *busLoad;
+		writeX(inst.rd, res);
+		return pc + 4;
+	}
+
 public:
 	CPU(Bus& b): bus{b} {}
 
@@ -270,6 +298,8 @@ public:
 		case InstructionType::BGEU:  return bgeu(inst);
 		case InstructionType::LB:    return lb(inst);
 		case InstructionType::LH:    return lh(inst);
+		case InstructionType::LW:    return lw(inst);
+		case InstructionType::LBU:   return lbu(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -372,6 +402,10 @@ public:
 				type = InstructionType::LB;
 			else if (funct3 == 0b001)
 				type = InstructionType::LH;
+			else if (funct3 == 0b010)
+				type = InstructionType::LW;
+			else if (funct3 == 0b100)
+				type = InstructionType::LBU;
 		}
 
 		return DecodedInstruction<T> {
