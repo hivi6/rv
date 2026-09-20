@@ -24,6 +24,7 @@ enum class CPUErrorType {
 	INSTRUCTION_ADDRESS_MISALIGNED,
 	LOAD_ACCESS_FAULT,
 	STORE_ACCESS_FAULT,
+	ENVIRONMENT_CALL,
 };
 
 struct CPUError {
@@ -399,6 +400,15 @@ class CPU {
 		return pc + 4;
 	}
 
+	inline std::expected<T, CPUError> ecall(DecodedInstruction<T> inst) {
+		// TODO: to implement ecall, we need to make sure to implement
+		// the previledge mode instructions, for now just returning
+		// an error
+		return std::unexpected(CPUError(
+			CPUErrorType::ENVIRONMENT_CALL,
+			"Environment call"));
+	}
+
 public:
 	CPU(Bus& b): bus{b} {}
 
@@ -458,6 +468,7 @@ public:
 		case InstructionType::FENCE:     return fence(inst);
 		case InstructionType::FENCE_TSO: return fenceTso(inst);
 		case InstructionType::PAUSE:     return pause(inst);
+		case InstructionType::ECALL:     return ecall(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -622,6 +633,15 @@ public:
 					&& succ == 0b0000 && rs1 == 0b00000)
 					type = InstructionType::PAUSE;
 			}
+		}
+		else if (opcode == 0b1110011) {
+			imm = IType<T>::imm(raw);
+
+			funct3 = IType<T>::funct3(raw);
+
+			if (imm == 0b000000000000 && rs1 == 0b00000 &&
+				funct3 == 0b000 && rd == 0b00000)
+				type = InstructionType::ECALL;
 		}
 
 		return DecodedInstruction<T> {

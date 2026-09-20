@@ -55,7 +55,8 @@
 - [x] FENCE
 - [x] FENCE.TSO
 - [x] PAUSE
-- [ ] ECALL
+- [x] ECALL
+	- Added a basic support but need to extend it later.
 - [ ] EBREAK
 
 ### R64I
