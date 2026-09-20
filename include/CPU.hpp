@@ -258,6 +258,20 @@ class CPU {
 		return pc + 4;
 	}
 
+	inline std::expected<T, CPUError> lhu(DecodedInstruction<T> inst) {
+		const auto address = readX(inst.rs1) + inst.imm;
+		auto busLoad = bus.load<u16>(address);
+		if (!busLoad) {
+			return std::unexpected(CPUError(
+				CPUErrorType::LOAD_ACCESS_FAULT,
+				"LHU target address couldn't be loaded"));
+		}
+
+		const auto res = *busLoad;
+		writeX(inst.rd, res);
+		return pc + 4;
+	}
+
 public:
 	CPU(Bus& b): bus{b} {}
 
@@ -300,6 +314,7 @@ public:
 		case InstructionType::LH:    return lh(inst);
 		case InstructionType::LW:    return lw(inst);
 		case InstructionType::LBU:   return lbu(inst);
+		case InstructionType::LHU:   return lhu(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -406,6 +421,8 @@ public:
 				type = InstructionType::LW;
 			else if (funct3 == 0b100)
 				type = InstructionType::LBU;
+			else if (funct3 == 0b101)
+				type = InstructionType::LHU;
 		}
 
 		return DecodedInstruction<T> {
