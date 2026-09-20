@@ -306,6 +306,11 @@ class CPU {
 		return pc + 4;
 	}
 
+	inline std::expected<T, CPUError> add(DecodedInstruction<T> inst) {
+		writeX(inst.rd, readX(inst.rs1) + readX(inst.rs2));
+		return pc + 4;
+	}
+
 public:
 	CPU(Bus& b): bus{b} {}
 
@@ -352,6 +357,7 @@ public:
 		case InstructionType::SRAI:  return srai(inst);
 		case InstructionType::SLTIU: return sltiu(inst);
 		case InstructionType::SLTI:  return slti(inst);
+		case InstructionType::ADD:   return add(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -375,6 +381,7 @@ public:
 		u32 funct3 = 0;
 		u32 shiftType = 0;
 		u32 shiftAmt = 0;
+		u32 funct7 = 0;
 
 		if (opcode == 0b0110111) {
 			imm = UType<T>::imm(raw);
@@ -442,7 +449,7 @@ public:
 			else if (funct3 == 0b010)
 				type = InstructionType::SW;
 		}
-		if (opcode == 0b0010011) {
+		else if (opcode == 0b0010011) {
 			imm = IType<T>::imm(raw);
 		
 			funct3 = IType<T>::funct3(raw);
@@ -473,6 +480,13 @@ public:
 			else if (funct3 == 0b010)
 				type = InstructionType::SLTI;
 		}
+		else if (opcode == 0b0110011) {
+			funct3 = RType<T>::funct3(raw);
+			funct7 = RType<T>::funct7(raw);
+
+			if (funct3 == 0b000 && funct7 == 0b0000000)
+				type = InstructionType::ADD;
+		}
 
 		return DecodedInstruction<T> {
 			.type = type,
@@ -487,6 +501,7 @@ public:
 			.funct3 = funct3,
 			.shiftType = shiftType,
 			.shiftAmt = shiftAmt,
+			.funct7 = funct7,
 		};
 	}
 

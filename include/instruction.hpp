@@ -117,6 +117,7 @@ enum class InstructionType {
 	SRAI,
 	SLTIU,
 	SLTI,
+	ADD,
 };
 
 template<RegisterType T>
@@ -133,6 +134,7 @@ struct DecodedInstruction {
 	u32 funct3;
 	u32 shiftType;
 	u32 shiftAmt;
+	u32 funct7;
 };
 
 }
