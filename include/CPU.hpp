@@ -96,7 +96,7 @@ public:
 		return 1;
 	}
 
-	static DecodedInstruction<T> decodeInstruction(u32 raw) {
+	static DecodedInstruction<T> decode(u32 raw) {
 		InstructionType type = InstructionType::INVALID;
 
 		auto opcode = IType<T>::opcode(raw);
@@ -170,7 +170,7 @@ public:
 		auto rawInst = fetch(dram);
 		pc += 4;
 
-		auto inst = decodeInstruction(rawInst);
+		auto inst = decode(rawInst);
 		auto successCode = execute(inst);
 
 		return successCode;
