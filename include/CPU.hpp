@@ -80,6 +80,11 @@ class CPU {
 		return pc + 4;
 	}
 
+	inline T auipc(DecodedInstruction<T> inst) {
+		writeX(inst.rd, inst.imm + pc);
+		return pc + 4;
+	}
+
 public:
 	T readPC() const {
 		return pc;
@@ -107,6 +112,7 @@ public:
 		case InstructionType::SLTIU: return sltiu(inst);
 		case InstructionType::SLTI:  return slti(inst);
 		case InstructionType::LUI:   return lui(inst);
+		case InstructionType::AUIPC: return auipc(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -166,6 +172,10 @@ public:
 		else if (opcode == 0b0110111) {
 			imm = UType<T>::imm(raw);
 			type = InstructionType::LUI;
+		}
+		else if (opcode == 0b0010111) {
+			imm = UType<T>::imm(raw);
+			type = InstructionType::AUIPC;
 		}
 
 		return DecodedInstruction<T> {
