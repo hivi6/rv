@@ -110,6 +110,7 @@ enum class InstructionType {
 	BLTU,
 	BGEU,
 	LB,
+	LH,
 };
 
 template<RegisterType T>
