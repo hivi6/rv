@@ -14,6 +14,7 @@ namespace riscv {
 enum class CPUErrorType {
 	INVALID_INSTRUCTION,
 	UNEXECUTED_INSTRUCTION,
+	INSTRUCTION_ADDRESS_MISALIGNED,
 };
 
 struct CPUError {
@@ -25,49 +26,49 @@ struct CPUError {
 
 template<RegisterType T>
 class CPU {
-	inline T addi(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUError> addi(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) + inst.imm);
 		return pc + 4;
 	}
 
-	inline T xori(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUError> xori(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) ^ inst.imm);
 		return pc + 4;
 	}
 
-	inline T ori(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUError> ori(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) | inst.imm);
 		return pc + 4;
 	}
 
-	inline T andi(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUError> andi(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) & inst.imm);
 		return pc + 4;
 	}
 
-	inline T slli(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUError> slli(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) << inst.shiftAmt);
 		return pc + 4;
 	}
 
-	inline T srli(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUError> srli(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) >> inst.shiftAmt);
 		return pc + 4;
 	}
 
-	inline T srai(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUError> srai(DecodedInstruction<T> inst) {
 		writeX(inst.rd, signExtend<T>(
 			readX(inst.rs1) >> inst.shiftAmt, 
 			xlen<T>() - inst.shiftAmt));
 		return pc + 4;
 	}
 
-	inline T sltiu(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUError> sltiu(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) < inst.imm);
 		return pc + 4;
 	}
 
-	inline T slti(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUError> slti(DecodedInstruction<T> inst) {
 		using signT = std::make_signed_t<T>;
 		const auto lhs = std::bit_cast<signT>(readX(inst.rs1));
 		const auto rhs = std::bit_cast<signT>(inst.imm);
@@ -75,14 +76,26 @@ class CPU {
 		return pc + 4;
 	}
 
-	inline T lui(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUError> lui(DecodedInstruction<T> inst) {
 		writeX(inst.rd, inst.imm);
 		return pc + 4;
 	}
 
-	inline T auipc(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUError> auipc(DecodedInstruction<T> inst) {
 		writeX(inst.rd, inst.imm + pc);
 		return pc + 4;
+	}
+
+	inline std::expected<T, CPUError> jal(DecodedInstruction<T> inst) {
+		const auto nextPC = pc + inst.imm;
+		if (nextPC % T{4} != 0) {
+			return std::unexpected(CPUError(
+				CPUErrorType::INSTRUCTION_ADDRESS_MISALIGNED,
+				"JAL target address is not 4-byte aligned"));
+		}
+
+		writeX(inst.rd, pc + 4);
+		return nextPC;
 	}
 
 public:
@@ -113,6 +126,7 @@ public:
 		case InstructionType::SLTI:  return slti(inst);
 		case InstructionType::LUI:   return lui(inst);
 		case InstructionType::AUIPC: return auipc(inst);
+		case InstructionType::JAL:   return jal(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -176,6 +190,10 @@ public:
 		else if (opcode == 0b0010111) {
 			imm = UType<T>::imm(raw);
 			type = InstructionType::AUIPC;
+		}
+		else if (opcode == 0b1101111) {
+			imm = JType<T>::imm(raw);
+			type = InstructionType::JAL;
 		}
 
 		return DecodedInstruction<T> {
