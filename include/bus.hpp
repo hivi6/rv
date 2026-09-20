@@ -46,12 +46,30 @@ public:
 				"reading address space is out of bounds"));
 		}
 
-		// TODO: little endian for now; handle both, for future
+		// TODO: little endian for now; handle both, in future
 		BType res = 0;
 		for (std::size_t i = 0; i < bytes; i++) {
 			res |= static_cast<BType>(dram[address + i]) << (8 * i);
 		}
 		return res;
+	}
+
+	template <BusType BType>
+	std::expected<void, BusError> store(u64 address, BType value) {
+		const auto bytes = sizeof(BType);
+		if (address >= busSize()
+			|| bytes > busSize() - address) {
+			return std::unexpected(BusError(
+				BusErrorType::ADDRESS_OUT_OF_BOUND,
+				"storage address space is out of bounds"));
+		}
+
+		// TODO: little endian for now; handle both, in future
+		for (std::size_t i = 0; i < bytes; i++) {
+			dram[address + i] = static_cast<u8>(value >> (8 * i));
+		}
+
+		return {};
 	}
 
 private:
