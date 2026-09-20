@@ -10,8 +10,8 @@ _start:
 	sub x6, x0, x2      # 0 - 7 = -7
 	sub x7, x2, x0      # subtracting zero preserves the value
 	addi x8, x0, -1
-	sub x9, x0, x8      # XLEN wraparound: 0 - 0xffffffff = 1
+	sub x9, x0, x8      # XLEN wraparound: 0 - RV64 max = 1
 	lui x10, 0x80000
 	addi x11, x0, 1
-	sub x12, x10, x11   # 0x80000000 - 1 wraps to 0x7fffffff
+	sub x12, x10, x11   # sign-extended LUI value minus one
 	sub x0, x1, x2      # writes targeting x0 must be discarded

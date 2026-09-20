@@ -12,7 +12,7 @@ _start:
 	addi x5, x1, 6
 	sh x2, -2(x5)      # negative immediate stores 0xffff at data + 4
 	lhu x6, 4(x1)      # reload as 0x0000ffff
-	lh x7, 4(x1)       # reload as 0xffffffff
+	lh x7, 4(x1)       # reload as 0xffffffffffffffff
 	lw x8, 4(x1)       # upper neighboring bytes remain 0xf0de
 	jal x0, end        # skip over the embedded data
 

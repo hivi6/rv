@@ -4,10 +4,10 @@
 _start:
 	addi x1, x0, -1
 	addi x2, x0, 1
-	bltu x1, x2, wrong_order    # unsigned max < 1; not taken
+	bltu x1, x2, wrong_order    # RV64 unsigned max < 1; not taken
 	addi x3, x0, 1
 wrong_order:
-	bltu x2, x1, unsigned_less  # unsigned 1 < max; taken
+	bltu x2, x1, unsigned_less  # unsigned 1 < RV64 max; taken
 	addi x4, x0, 1              # skipped
 unsigned_less:
 	addi x5, x0, 1

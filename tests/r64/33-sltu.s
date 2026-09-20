@@ -2,7 +2,7 @@
 .globl _start
 
 _start:
-	addi x1, x0, -1     # unsigned maximum: 0xffffffff
+	addi x1, x0, -1     # RV64 unsigned maximum
 	addi x2, x0, 1
 	sltu x3, x1, x2     # unsigned maximum is not less than 1
 	sltu x4, x2, x1     # 1 < unsigned maximum
@@ -12,7 +12,7 @@ _start:
 	sltu x8, x6, x2     # 2 is not less than 1
 	sltu x9, x0, x2     # 0 < 1
 	sltu x10, x1, x0    # unsigned maximum is not less than zero
-	lui x11, 0x80000    # 0x80000000
+	lui x11, 0x80000    # 0xffffffff80000000 after RV64 sign extension
 	sltu x12, x11, x1   # high-bit value < unsigned maximum
 	sltu x13, x1, x11
 	sltu x0, x2, x1     # writes targeting x0 must be discarded

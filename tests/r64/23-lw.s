@@ -4,8 +4,8 @@
 _start:
 	addi x1, x0, 32
 	lw x2, 0(x1)       # positive word: 0x78563412
-	lw x3, 4(x1)       # sign bit set: 0x80000000
-	lw x4, 8(x1)       # all bits set: 0xffffffff
+	lw x3, 4(x1)       # sign-extends to 0xffffffff80000000
+	lw x4, 8(x1)       # sign-extends to 0xffffffffffffffff
 	addi x5, x1, 8
 	lw x6, -4(x5)      # negative immediate addresses 0x80000000
 	lw x0, 0(x1)       # loads targeting x0 must be discarded

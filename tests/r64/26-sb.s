@@ -6,7 +6,7 @@ _start:
 	addi x2, x0, -1
 	sb x2, 0(x1)       # store only the low byte: 0xff
 	lbu x3, 0(x1)      # reload as 0x000000ff
-	lb x4, 0(x1)       # reload as 0xffffffff
+	lb x4, 0(x1)       # reload as 0xffffffffffffffff
 	addi x2, x0, 127
 	addi x5, x1, 2
 	sb x2, -1(x5)      # negative immediate stores 0x7f at data + 1
