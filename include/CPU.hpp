@@ -123,6 +123,19 @@ class CPU {
 		return nextPC;
 	}
 
+	inline std::expected<T, CPUError> bne(DecodedInstruction<T> inst) {
+		const auto nextPC = (readX(inst.rs1) != readX(inst.rs2) 
+			? pc + inst.imm : pc + 4);
+
+		if (nextPC % T{4} != 0) {
+			return std::unexpected(CPUError(
+				CPUErrorType::INSTRUCTION_ADDRESS_MISALIGNED,
+				"BNE target address is not 4-byte aligned"));
+		}
+
+		return nextPC;
+	}
+
 public:
 	T readPC() const {
 		return pc;
@@ -154,6 +167,7 @@ public:
 		case InstructionType::JAL:   return jal(inst);
 		case InstructionType::JALR:  return jalr(inst);
 		case InstructionType::BEQ:   return beq(inst);
+		case InstructionType::BNE:   return bne(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -236,6 +250,8 @@ public:
 
 			if (funct3 == 0b000)
 				type = InstructionType::BEQ;
+			else if (funct3 == 0b001)
+				type = InstructionType::BNE;
 		}
 
 		return DecodedInstruction<T> {
