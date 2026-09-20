@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <expected>
 #include <string>
 #include <vector>
@@ -37,9 +38,9 @@ public:
 
 	template <BusType BType>
 	std::expected<BType, BusError> load(u64 address) const {
-		auto bytes = sizeof(BType);
+		const auto bytes = sizeof(BType);
 		if (address >= busSize()
-			|| bytes >= busSize() - address) {
+			|| bytes > busSize() - address) {
 			return std::unexpected(BusError(
 				BusErrorType::ADDRESS_OUT_OF_BOUND,
 				"reading address space is out of bounds"));
@@ -47,7 +48,7 @@ public:
 
 		// TODO: little endian for now; handle both, for future
 		BType res = 0;
-		for (int i = 0; i < bytes; i++) {
+		for (std::size_t i = 0; i < bytes; i++) {
 			res |= static_cast<BType>(dram[address + i]) << (8 * i);
 		}
 		return res;
@@ -59,4 +60,3 @@ private:
 };
 
 };
-

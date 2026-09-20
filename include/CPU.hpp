@@ -22,6 +22,7 @@ enum class CPUErrorType {
 	INVALID_INSTRUCTION,
 	UNEXECUTED_INSTRUCTION,
 	INSTRUCTION_ADDRESS_MISALIGNED,
+	LOAD_ACCESS_FAULT,
 };
 
 struct CPUError {
@@ -201,6 +202,20 @@ class CPU {
 		return nextPC;
 	}
 
+	inline std::expected<T, CPUError> lb(DecodedInstruction<T> inst) {
+		const auto address = readX(inst.rs1) + inst.imm;
+		auto busLoad = bus.load<u8>(address);
+		if (!busLoad) {
+			return std::unexpected(CPUError(
+				CPUErrorType::LOAD_ACCESS_FAULT,
+				"LB target address couldn't be loaded"));
+		}
+
+		const auto res = signExtend<T>(T{*busLoad}, 8);
+		writeX(inst.rd, res);
+		return pc + 4;
+	}
+
 public:
 	CPU(Bus& b): bus{b} {}
 
@@ -239,6 +254,7 @@ public:
 		case InstructionType::BGE:   return bge(inst);
 		case InstructionType::BLTU:  return bltu(inst);
 		case InstructionType::BGEU:  return bgeu(inst);
+		case InstructionType::LB:    return lb(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -332,6 +348,14 @@ public:
 			else if (funct3 == 0b111)
 				type = InstructionType::BGEU;
 		}
+		else if (opcode == 0b0000011) {
+			imm = IType<T>::imm(raw);
+			
+			funct3 = IType<T>::funct3(raw);
+
+			if (funct3 == 0b000)
+				type = InstructionType::LB;
+		}
 
 		return DecodedInstruction<T> {
 			.type = type,
@@ -391,4 +415,3 @@ private:
 };
 
 }
-
