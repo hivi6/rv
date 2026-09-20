@@ -43,8 +43,8 @@
 - [x] SRLI
 - [x] SRAI
 - [x] ADD
-- [ ] SUB
-- [ ] SLL
+- [x] SUB
+- [x] SLL
 - [ ] SLT
 - [ ] SLTU
 - [ ] XOR

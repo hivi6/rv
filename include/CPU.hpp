@@ -316,6 +316,15 @@ class CPU {
 		return pc + 4;
 	}
 
+	inline std::expected<T, CPUError> sll(DecodedInstruction<T> inst) {
+		// for 32 bits, only last 5 bits are used for shift amount
+		// for 64 bits, onlt last 6 bits are used for shift amount
+		const auto validMask = xlen<T>() - 1;
+		const auto shamt = readX(inst.rs2) & validMask;
+		writeX(inst.rd, readX(inst.rs1) << shamt);
+		return pc + 4;
+	}
+
 public:
 	CPU(Bus& b): bus{b} {}
 
@@ -364,6 +373,7 @@ public:
 		case InstructionType::SLTI:  return slti(inst);
 		case InstructionType::ADD:   return add(inst);
 		case InstructionType::SUB:   return sub(inst);
+		case InstructionType::SLL:   return sll(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -494,6 +504,8 @@ public:
 				type = InstructionType::ADD;
 			else if (funct3 == 0b000 && funct7 == 0b0100000)
 				type = InstructionType::SUB;
+			else if (funct3 == 0b001 && funct7 == 0b0000000)
+				type = InstructionType::SLL;
 		}
 
 		return DecodedInstruction<T> {
