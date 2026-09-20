@@ -53,10 +53,17 @@ int main(int argc, const char **argv) {
 
 		std::cout << "STEP: " << step << std::endl;
 		auto success = cpu.step(dram);
+		if (!success) {
+			auto err = success.error();
+			std::cerr << "ERROR: " << err.msg << std::endl;
+		}
+
 		printRegisters(cpu);
 		std::cout << std::endl;
 
-		if (!success) break;
+		if (!success) {
+			return 1;
+		}
 	}
 	
 	return 0;

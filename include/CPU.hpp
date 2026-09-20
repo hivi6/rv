@@ -1,9 +1,10 @@
 #pragma once
 
-#include <iomanip>
-#include <iostream>
 #include <array>
 #include <cstdint>
+#include <expected>
+#include <iomanip>
+#include <iostream>
 #include <sstream>
 #include <vector>
 
@@ -12,6 +13,18 @@
 #include "instruction.hpp"
 
 namespace riscv {
+
+enum class CPUErrorType {
+	INVALID_INSTRUCTION,
+	UNEXECUTED_INSTRUCTION,
+};
+
+struct CPUError {
+	CPUErrorType type;
+	std::string msg;
+
+	CPUError(CPUErrorType t, std::string m) : type{t}, msg{m} {}
+};
 
 template<RegisterType T>
 class CPU {
@@ -189,14 +202,29 @@ public:
 			| (((u32) dram[pc + 3]) << 24);
 	}
 
-	char step(const std::vector<u8> &dram) {
+	std::expected<void, CPUError> step(const std::vector<u8> &dram) {
 		auto rawInst = fetch(dram);
-		pc += 4;
 
 		auto inst = decode(rawInst);
-		auto successCode = execute(inst);
+		if (inst.type == InstructionType::INVALID) {
+			std::string errorMsg = "decoding failed: " 
+				+ toHex(rawInst);
+			return std::unexpected(CPUError(
+				CPUErrorType::INVALID_INSTRUCTION, errorMsg));
+		}
 
-		return successCode;
+		auto successCode = execute(inst);
+		if (successCode == 0) {
+			std::string errorMsg = 
+				"instruction couldn't be executed";
+			return std::unexpected(CPUError(
+				CPUErrorType::UNEXECUTED_INSTRUCTION, 
+				errorMsg));
+		}
+
+		pc += 4;
+
+		return {};
 	}
 
 private:
