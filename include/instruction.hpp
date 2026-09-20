@@ -103,6 +103,7 @@ enum class InstructionType {
 	AUIPC,
 	JAL,
 	JALR,
+	BEQ,
 };
 
 template<RegisterType T>

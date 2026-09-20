@@ -19,7 +19,7 @@
 - [x] AUIPC
 - [x] JAL
 - [x] JALR
-- [ ] BEQ
+- [x] BEQ
 - [ ] BNE
 - [ ] BLT
 - [ ] BGE
