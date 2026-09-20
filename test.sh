@@ -1,5 +1,7 @@
 #/bin/bash
 
+set -euo pipefail
+
 all_passed=1
 for test in `find tests -name '*.s' | sort`; do
 	riscv64-elf-gcc -march=rv32i -mabi=ilp32 -nostdlib -Wl,-e,_start -Wl,-Ttext=0x0 -o $test.elf $test
