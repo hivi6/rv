@@ -338,6 +338,11 @@ class CPU {
 		return pc + 4;
 	}
 
+	inline std::expected<T, CPUError> _xor(DecodedInstruction<T> inst) {
+		writeX(inst.rd, readX(inst.rs1) ^ readX(inst.rs2));
+		return pc + 4;
+	}
+
 public:
 	CPU(Bus& b): bus{b} {}
 
@@ -389,6 +394,7 @@ public:
 		case InstructionType::SLL:   return sll(inst);
 		case InstructionType::SLT:   return slt(inst);
 		case InstructionType::SLTU:  return sltu(inst);
+		case InstructionType::XOR:   return _xor(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -525,6 +531,8 @@ public:
 				type = InstructionType::SLT;
 			else if (funct3 == 0b011 && funct7 == 0b0000000)
 				type = InstructionType::SLTU;
+			else if (funct3 == 0b100 && funct7 == 0b0000000)
+				type = InstructionType::XOR;
 		}
 
 		return DecodedInstruction<T> {
