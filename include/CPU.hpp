@@ -284,6 +284,17 @@ class CPU {
 		return pc + 4;
 	}
 
+	inline std::expected<T, CPUError> sh(DecodedInstruction<T> inst) {
+		const auto address = readX(inst.rs1) + inst.imm;
+		auto busStore = bus.store<u16>(address, readX(inst.rs2));
+		if (!busStore) {
+			return std::unexpected(CPUError(
+				CPUErrorType::STORE_ACCESS_FAULT,
+				"SH target address couldn't be stored"));
+		}
+		return pc + 4;
+	}
+
 public:
 	CPU(Bus& b): bus{b} {}
 
@@ -328,6 +339,7 @@ public:
 		case InstructionType::LBU:   return lbu(inst);
 		case InstructionType::LHU:   return lhu(inst);
 		case InstructionType::SB:    return sb(inst);
+		case InstructionType::SH:    return sh(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -444,6 +456,8 @@ public:
 
 			if (funct3 == 0b000)
 				type = InstructionType::SB;
+			else if (funct3 == 0b001)
+				type = InstructionType::SH;
 		}
 
 		return DecodedInstruction<T> {

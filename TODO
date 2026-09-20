@@ -31,7 +31,7 @@
 - [x] LBU
 - [x] LHU
 - [x] SB
-- [ ] SH
+- [x] SH
 - [ ] SW
 - [x] ADDI
 - [x] SLTI
