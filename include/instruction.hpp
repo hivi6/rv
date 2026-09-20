@@ -67,6 +67,7 @@ enum class InstructionType {
 	SRAI,
 	SLTIU,
 	SLTI,
+	LUI,
 };
 
 template<RegisterType T>

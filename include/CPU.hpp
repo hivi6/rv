@@ -56,6 +56,10 @@ class CPU {
 		writeX(inst.rd, lhs < rhs);
 	}
 
+	inline void lui(DecodedInstruction<T> inst) {
+		writeX(inst.rd, inst.imm);
+	}
+
 public:
 	T readPC() const {
 		return pc;
@@ -99,6 +103,9 @@ public:
 			break;
 		case InstructionType::SLTI:
 			slti(inst);
+			break;
+		case InstructionType::LUI:
+			lui(inst);
 			break;
 		default:
 			return 0;
@@ -150,6 +157,10 @@ public:
 				type = InstructionType::SLTIU;
 			else if (funct3 == 0b010)
 				type = InstructionType::SLTI;
+		}
+		else if (opcode == 0b0110111) {
+			imm = UType<T>::imm(raw);
+			type = InstructionType::LUI;
 		}
 
 		return DecodedInstruction<T> {

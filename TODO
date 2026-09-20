@@ -15,7 +15,7 @@
 
 ### R32I
 
-- [ ] LUI
+- [x] LUI
 - [ ] AUIPC
 - [ ] JAL
 - [ ] JALR
