@@ -8,10 +8,17 @@
 #include "types.hpp"
 #include "utils.hpp"
 #include "instruction.hpp"
+#include "bus.hpp"
 
 namespace riscv {
 
+enum class CPUStepState {
+	RUNNING,
+	HALTED,
+};
+
 enum class CPUErrorType {
+	INSTRUCTION_ACCESS_FAULT,
 	INVALID_INSTRUCTION,
 	UNEXECUTED_INSTRUCTION,
 	INSTRUCTION_ADDRESS_MISALIGNED,
@@ -195,6 +202,8 @@ class CPU {
 	}
 
 public:
+	CPU(Bus& b): bus{b} {}
+
 	T readPC() const {
 		return pc;
 	}
@@ -341,22 +350,26 @@ public:
 	}
 
 
-	u32 fetch(const std::vector<u8> &dram) {
-		// TODO: Support for both little endian and big endian
-		// Current supporting only little endian
-		return ((u32) dram[pc])
-			| (((u32) dram[pc + 1]) << 8)
-			| (((u32) dram[pc + 2]) << 16)
-			| (((u32) dram[pc + 3]) << 24);
+	std::expected<u32, CPUError> fetch() {
+		auto res = bus.load<u32>(pc);
+		if (!res) {
+			return std::unexpected(CPUError(
+				CPUErrorType::INSTRUCTION_ACCESS_FAULT,
+				"load address is outside mapped memory"));
+		}
+		return *res;
 	}
 
-	std::expected<void, CPUError> step(const std::vector<u8> &dram) {
-		auto rawInst = fetch(dram);
+	std::expected<void, CPUError> step() {
+		auto rawInst = fetch();
+		if (!rawInst) {
+			return std::unexpected(rawInst.error());
+		}
 
-		auto inst = decode(rawInst);
+		auto inst = decode(*rawInst);
 		if (inst.type == InstructionType::INVALID) {
 			std::string errorMsg = "decoding failed: " 
-				+ toHex(rawInst);
+				+ toHex(*rawInst);
 			return std::unexpected(CPUError(
 				CPUErrorType::INVALID_INSTRUCTION, errorMsg));
 		}
@@ -374,6 +387,7 @@ public:
 private:
 	std::array<T, 32> x{};
 	T pc{};
+	Bus& bus;
 };
 
 }

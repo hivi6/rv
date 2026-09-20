@@ -13,5 +13,9 @@ using u64 = std::uint64_t;
 template <typename T>
 concept RegisterType = std::same_as<T, u32> || std::same_as<T, u64>;
 
+template <typename T>
+concept BusType = std::same_as<T, u8> || std::same_as<T, u16>
+	|| std::same_as<T, u32> || std::same_as<T, u64>;
+
 }
 

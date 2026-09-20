@@ -24,14 +24,14 @@ std::vector<riscv::u8> loadBin(std::string filepath) {
 
 template<riscv::RegisterType T>
 void printRegisters(const riscv::CPU<T> &cpu) {
-	std::cout << "pc : " << riscv::toHex(cpu.readPC()) << std::endl;
+	std::cout << "pc : " << riscv::toHex<T>(cpu.readPC()) << std::endl;
 	for (int i = 0; i < 8; i++) {
 		for (int j = 0; j < 4; j++) {
 			int reg = i * 4 + j;
 			auto regStr = std::to_string(reg);
 			if (regStr.size() <= 1) regStr.push_back(' ');
 			std::cout << "x" << regStr << " : " 
-				<< riscv::toHex(cpu.readX(reg)) << " ";
+				<< riscv::toHex<T>(cpu.readX(reg)) << " ";
 		}
 		std::cout << std::endl;
 	}
@@ -45,15 +45,15 @@ int main(int argc, const char **argv) {
 	}
 
 	std::string filepath(argv[1]);
-	auto dram = loadBin(filepath);
 
-	riscv::CPU<riscv::u32> cpu;
+	riscv::Bus bus(loadBin(filepath));
+	riscv::CPU<riscv::u32> cpu(bus);
 
 	for (int step=1; ; step++) {
-		if (cpu.readPC() >= dram.size()) break;
+		if (cpu.readPC() >= bus.binSize()) break;
 
 		std::cout << "STEP: " << step << std::endl;
-		auto success = cpu.step(dram);
+		auto success = cpu.step();
 		if (!success) {
 			auto err = success.error();
 			std::cerr << "ERROR: " << err.msg << std::endl;
