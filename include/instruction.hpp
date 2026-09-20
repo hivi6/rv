@@ -126,6 +126,7 @@ enum class InstructionType {
 	SRL,
 	SRA,
 	OR,
+	AND,
 };
 
 template<RegisterType T>

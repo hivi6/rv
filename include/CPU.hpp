@@ -368,6 +368,11 @@ class CPU {
 		return pc + 4;
 	}
 
+	inline std::expected<T, CPUError> _and(DecodedInstruction<T> inst) {
+		writeX(inst.rd, readX(inst.rs1) & readX(inst.rs2));
+		return pc + 4;
+	}
+
 public:
 	CPU(Bus& b): bus{b} {}
 
@@ -423,6 +428,7 @@ public:
 		case InstructionType::SRL:   return srl(inst);
 		case InstructionType::SRA:   return sra(inst);
 		case InstructionType::OR:    return _or(inst);
+		case InstructionType::AND:   return _and(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -567,6 +573,8 @@ public:
 				type = InstructionType::SRA;
 			else if (funct3 == 0b110 && funct7 == 0b0000000)
 				type = InstructionType::OR;
+			else if (funct3 == 0b111 && funct7 == 0b0000000)
+				type = InstructionType::AND;
 		}
 
 		return DecodedInstruction<T> {
