@@ -22,7 +22,7 @@
 - [x] BEQ
 - [x] BNE
 - [x] BLT
-- [ ] BGE
+- [x] BGE
 - [ ] BLTU
 - [ ] BGEU
 - [ ] LB
