@@ -57,16 +57,17 @@
 - [x] PAUSE
 - [x] ECALL
 	- Added a basic support but need to extend it later.
-- [ ] EBREAK
+- [x] EBREAK
+	- Added a basic support but need to extend it later.
 
 ### R64I
 
-- [ ] LWU
-- [ ] LD
-- [ ] SD
-- [ ] SLLI
-- [ ] SRLI
-- [ ] SRAI
+- [x] LWU
+- [x] LD
+- [x] SD
+- [x] SLLI
+- [x] SRLI
+- [x] SRAI
 - [ ] ADDIW
 - [ ] SLLIW
 - [ ] SRLIW
@@ -76,3 +77,4 @@
 - [ ] SLLW
 - [ ] SRLW
 - [ ] SRAW
+

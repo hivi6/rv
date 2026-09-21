@@ -20,6 +20,7 @@ enum class CPUStepState {
 enum class CPUErrorType {
 	INSTRUCTION_ACCESS_FAULT,
 	INVALID_INSTRUCTION,
+	UNSUPPORTED_INSTRUCTION,
 	UNEXECUTED_INSTRUCTION,
 	INSTRUCTION_ADDRESS_MISALIGNED,
 	LOAD_ACCESS_FAULT,
@@ -419,6 +420,63 @@ class CPU {
 			"Environment break"));
 	}
 
+	inline std::expected<T, CPUError> lwu(DecodedInstruction<T> inst) {
+		if (xlen<T>() == 32) {
+			return std::unexpected(CPUError(
+				CPUErrorType::UNSUPPORTED_INSTRUCTION,
+				"LWU not supported for r32"));
+		}
+
+		const auto address = readX(inst.rs1) + inst.imm;
+		auto busLoad = bus.load<u32>(address);
+		if (!busLoad) {
+			return std::unexpected(CPUError(
+				CPUErrorType::LOAD_ACCESS_FAULT,
+				"LWU target address couldn't be loaded"));
+		}
+
+		const auto res = *busLoad;
+		writeX(inst.rd, res);
+		return pc + 4;
+	}
+
+	inline std::expected<T, CPUError> ld(DecodedInstruction<T> inst) {
+		if (xlen<T>() == 32) {
+			return std::unexpected(CPUError(
+				CPUErrorType::UNSUPPORTED_INSTRUCTION,
+				"LD not supported for r32"));
+		}
+
+		const auto address = readX(inst.rs1) + inst.imm;
+		auto busLoad = bus.load<u64>(address);
+		if (!busLoad) {
+			return std::unexpected(CPUError(
+				CPUErrorType::LOAD_ACCESS_FAULT,
+				"LD target address couldn't be loaded"));
+		}
+
+		const auto res = signExtend<T>(*busLoad, 64);
+		writeX(inst.rd, res);
+		return pc + 4;
+	}
+
+	inline std::expected<T, CPUError> sd(DecodedInstruction<T> inst) {
+		if (xlen<T>() == 32) {
+			return std::unexpected(CPUError(
+				CPUErrorType::UNSUPPORTED_INSTRUCTION,
+				"SD not supported for r32"));
+		}
+
+		const auto address = readX(inst.rs1) + inst.imm;
+		auto busStore = bus.store<u64>(address, readX(inst.rs2));
+		if (!busStore) {
+			return std::unexpected(CPUError(
+				CPUErrorType::STORE_ACCESS_FAULT,
+				"SD target address couldn't be stored"));
+		}
+		return pc + 4;
+	}
+
 public:
 	CPU(Bus& b): bus{b} {}
 
@@ -480,6 +538,9 @@ public:
 		case InstructionType::PAUSE:     return pause(inst);
 		case InstructionType::ECALL:     return ecall(inst);
 		case InstructionType::EBREAK:    return ebreak(inst);
+		case InstructionType::LWU:       return lwu(inst);
+		case InstructionType::LD:        return ld(inst);
+		case InstructionType::SD:        return sd(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -554,10 +615,14 @@ public:
 				type = InstructionType::LH;
 			else if (funct3 == 0b010)
 				type = InstructionType::LW;
+			else if (funct3 == 0b011)
+				type = InstructionType::LD;
 			else if (funct3 == 0b100)
 				type = InstructionType::LBU;
 			else if (funct3 == 0b101)
 				type = InstructionType::LHU;
+			else if (funct3 == 0b110)
+				type = InstructionType::LWU;
 		}
 		else if (opcode == 0b0100011) {
 			imm = SType<T>::imm(raw);
@@ -570,6 +635,8 @@ public:
 				type = InstructionType::SH;
 			else if (funct3 == 0b010)
 				type = InstructionType::SW;
+			else if (funct3 == 0b011)
+				type = InstructionType::SD;
 		}
 		else if (opcode == 0b0010011) {
 			imm = IType<T>::imm(raw);

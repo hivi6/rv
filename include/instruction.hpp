@@ -131,7 +131,10 @@ enum class InstructionType {
 	FENCE_TSO,
 	PAUSE,
 	ECALL,
-	EBREAK
+	EBREAK,
+	LWU,
+	LD,
+	SD,
 };
 
 template<RegisterType T>
