@@ -527,6 +527,18 @@ class CPU {
 		return pc + 4;
 	}
 
+	inline std::expected<T, CPUError> addw(DecodedInstruction<T> inst) {
+		if (xlen<T>() == 32) {
+			return std::unexpected(CPUError(
+				CPUErrorType::UNSUPPORTED_INSTRUCTION,
+				"ADDW not supported for r32"));
+		}
+
+		const auto res = static_cast<u32>(readX(inst.rs1) 
+			+ readX(inst.rs2));
+		writeX(inst.rd, signExtend<T>(res, 32));
+		return pc + 4;
+	}
 
 public:
 	CPU(Bus& b): bus{b} {}
@@ -596,6 +608,7 @@ public:
 		case InstructionType::SLLIW:     return slliw(inst);
 		case InstructionType::SRLIW:     return srliw(inst);
 		case InstructionType::SRAIW:     return sraiw(inst);
+		case InstructionType::ADDW:      return addw(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -796,6 +809,13 @@ public:
 				type = InstructionType::SRLIW;
 			else if (funct3 == 0b101 && shiftType == 0b0100000)
 				type = InstructionType::SRAIW;
+		}
+		else if (opcode == 0b0111011) {
+			funct3 = RType<T>::funct3(raw);
+			funct7 = RType<T>::funct7(raw);
+
+			if (funct3 == 0b000 && funct7 == 0b0000000)
+				type = InstructionType::ADDW;
 		}
 
 		return DecodedInstruction<T> {
