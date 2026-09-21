@@ -477,6 +477,57 @@ class CPU {
 		return pc + 4;
 	}
 
+	inline std::expected<T, CPUError> addiw(DecodedInstruction<T> inst) {
+		if (xlen<T>() == 32) {
+			return std::unexpected(CPUError(
+				CPUErrorType::UNSUPPORTED_INSTRUCTION,
+				"ADDIW not supported for r32"));
+		}
+
+		const auto res = static_cast<u32>(readX(inst.rs1) + inst.imm);
+		writeX(inst.rd, signExtend<T>(res, 32));
+		return pc + 4;
+	}
+
+	inline std::expected<T, CPUError> slliw(DecodedInstruction<T> inst) {
+		if (xlen<T>() == 32) {
+			return std::unexpected(CPUError(
+				CPUErrorType::UNSUPPORTED_INSTRUCTION,
+				"SLLIW not supported for r32"));
+		}
+
+		const auto res = static_cast<u32>(readX(inst.rs1) << inst.imm);
+		writeX(inst.rd, signExtend<T>(res, 32));
+		return pc + 4;
+	}
+
+	inline std::expected<T, CPUError> srliw(DecodedInstruction<T> inst) {
+		if (xlen<T>() == 32) {
+			return std::unexpected(CPUError(
+				CPUErrorType::UNSUPPORTED_INSTRUCTION,
+				"SRLIW not supported for r32"));
+		}
+
+		const u32 word = static_cast<u32>(readX(inst.rs1));
+		const u32 res = word >> inst.shiftAmt;
+		writeX(inst.rd, signExtend<T>(res, 32));
+		return pc + 4;
+	}
+
+	inline std::expected<T, CPUError> sraiw(DecodedInstruction<T> inst) {
+		if (xlen<T>() == 32) {
+			return std::unexpected(CPUError(
+				CPUErrorType::UNSUPPORTED_INSTRUCTION,
+				"SRAIW not supported for r32"));
+		}
+
+		const u32 word = static_cast<u32>(readX(inst.rs1));
+		const u32 res = word >> inst.shiftAmt;
+		writeX(inst.rd, signExtend<T>(res, 32 - inst.shiftAmt));
+		return pc + 4;
+	}
+
+
 public:
 	CPU(Bus& b): bus{b} {}
 
@@ -541,6 +592,10 @@ public:
 		case InstructionType::LWU:       return lwu(inst);
 		case InstructionType::LD:        return ld(inst);
 		case InstructionType::SD:        return sd(inst);
+		case InstructionType::ADDIW:     return addiw(inst);
+		case InstructionType::SLLIW:     return slliw(inst);
+		case InstructionType::SRLIW:     return srliw(inst);
+		case InstructionType::SRAIW:     return sraiw(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -723,6 +778,24 @@ public:
 			if (imm == 0b000000000001 && rs1 == 0b00000 &&
 				funct3 == 0b000 && rd == 0b00000)
 				type = InstructionType::EBREAK;
+		}
+		else if (opcode == 0b0011011) {
+			imm = IType<T>::imm(raw);
+
+			funct3 = IType<T>::funct3(raw);
+
+			// make sure the shiftType is based on u32
+			shiftType = IType<u32>::shiftType(raw);
+			shiftAmt = IType<u32>::shiftAmt(raw);
+
+			if (funct3 == 0b000)
+				type = InstructionType::ADDIW;
+			else if (funct3 == 0b001 && shiftType == 0b0000000)
+				type = InstructionType::SLLIW;
+			else if (funct3 == 0b101 && shiftType == 0b0000000)
+				type = InstructionType::SRLIW;
+			else if (funct3 == 0b101 && shiftType == 0b0100000)
+				type = InstructionType::SRAIW;
 		}
 
 		return DecodedInstruction<T> {

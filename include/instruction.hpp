@@ -135,6 +135,10 @@ enum class InstructionType {
 	LWU,
 	LD,
 	SD,
+	ADDIW,
+	SLLIW,
+	SRLIW,
+	SRAIW,
 };
 
 template<RegisterType T>

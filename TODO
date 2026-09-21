@@ -68,10 +68,10 @@
 - [x] SLLI
 - [x] SRLI
 - [x] SRAI
-- [ ] ADDIW
-- [ ] SLLIW
-- [ ] SRLIW
-- [ ] SRAIW
+- [x] ADDIW
+- [x] SLLIW
+- [x] SRLIW
+- [x] SRAIW
 - [ ] ADDW
 - [ ] SUBW
 - [ ] SLLW
