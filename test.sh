@@ -3,6 +3,7 @@
 set -euo pipefail
 
 for xlen in `echo "32 64" | xargs`; do
+	echo "Testing r${xlen}"
 	all_passed=1
 	for test in `find tests/r${xlen} -name '*.s' | sort`; do
 		abi=ilp32
