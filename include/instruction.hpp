@@ -141,6 +141,7 @@ enum class InstructionType {
 	SRAIW,
 	ADDW,
 	SUBW,
+	SLLW,
 };
 
 template<RegisterType T>
