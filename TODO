@@ -75,6 +75,6 @@
 - [x] ADDW
 - [x] SUBW
 - [x] SLLW
-- [ ] SRLW
-- [ ] SRAW
+- [x] SRLW
+- [x] SRAW
 

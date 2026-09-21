@@ -581,6 +581,21 @@ class CPU {
 		return pc + 4;
 	}
 
+	inline std::expected<T, CPUError> sraw(DecodedInstruction<T> inst) {
+		if (xlen<T>() == 32) {
+			return std::unexpected(CPUError(
+				CPUErrorType::UNSUPPORTED_INSTRUCTION,
+				"SRAW not supported for r32"));
+		}
+
+		const auto validMask = xlen<u32>() - 1;
+		const auto shamt = readX(inst.rs2) & validMask;
+		const auto res = static_cast<u32>(readX(inst.rs1)) >> shamt;
+		const auto signEx = signExtend<T>(res, xlen<u32>() - shamt);
+		writeX(inst.rd, signEx);
+		return pc + 4;
+	}
+
 public:
 	CPU(Bus& b): bus{b} {}
 
@@ -653,6 +668,7 @@ public:
 		case InstructionType::SUBW:      return subw(inst);
 		case InstructionType::SLLW:      return sllw(inst);
 		case InstructionType::SRLW:      return srlw(inst);
+		case InstructionType::SRAW:      return sraw(inst);
 		default: {
 			std::string errorMsg = 
 				"instruction couldn't be executed";
@@ -866,6 +882,8 @@ public:
 				type = InstructionType::SLLW;
 			else if (funct3 == 0b101 && funct7 == 0b0000000)
 				type = InstructionType::SRLW;
+			else if (funct3 == 0b101 && funct7 == 0b0100000)
+				type = InstructionType::SRAW;
 		}
 
 		return DecodedInstruction<T> {
