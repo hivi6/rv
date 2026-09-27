@@ -2,19 +2,19 @@
 
 set -euo pipefail
 
-for xlen in `echo "32 64" | xargs`; do
-	echo "Testing r${xlen}"
+for test_type in `ls tests | xargs`; do
+	echo "Testing $test_type"
 	all_passed=1
-	for test in `find tests/r${xlen} -name '*.s' | sort`; do
+	for test in `find tests/$test_type -name '*.s' | sort`; do
 		abi=ilp32
-		if [ "$xlen" == "64" ]; then
+		if [ "$test_type" == "rv64i" ]; then
 			abi=lp64
 		fi
 
-		riscv64-elf-gcc -march=rv${xlen}i -mabi=${abi} -nostdlib \
+		riscv64-elf-gcc -march=$test_type -mabi=${abi} -nostdlib \
 			-Wl,-e,_start -Wl,-Ttext=0x0 -o $test.elf $test
 		riscv64-elf-objcopy -O binary $test.elf $test.bin
-		./build/rv-test${xlen} $test.bin 2>&1 \
+		./build/test-$test_type $test.bin 2>&1 \
 			| diff - $test.out &> /dev/null
 		passed=$?
 
