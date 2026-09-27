@@ -5,6 +5,10 @@
 - [ ] Read the complete specification for unprivileged isa
   - https://docs.riscv.org/reference/isa/_attachments/riscv-unprivileged.pdf
   - [x] Read chapter 1
+  - [x] Read chapter 2
+  - [x] Read chapter 3
+  - [x] Read chapter 4
+  - [x] Read chapter 5
 
 ## Extras
 
@@ -12,6 +16,34 @@
 - [x] Remove print in the CPU.hpp file
 
 ## Instruction Support
+
+### Zicsr
+
+- [ ] CSRRW
+- [ ] CSRRS
+- [ ] CSRRC
+- [ ] CSRRWI
+- [ ] CSRRSI
+- [ ] CSRRCI
+
+### R64I
+
+- [x] LWU
+- [x] LD
+- [x] SD
+- [x] SLLI
+- [x] SRLI
+- [x] SRAI
+- [x] ADDIW
+- [x] SLLIW
+- [x] SRLIW
+- [x] SRAIW
+- [x] ADDW
+- [x] SUBW
+- [x] SLLW
+- [x] SRLW
+- [x] SRAW
+
 
 ### R32I
 
@@ -59,22 +91,4 @@
 	- Added a basic support but need to extend it later.
 - [x] EBREAK
 	- Added a basic support but need to extend it later.
-
-### R64I
-
-- [x] LWU
-- [x] LD
-- [x] SD
-- [x] SLLI
-- [x] SRLI
-- [x] SRAI
-- [x] ADDIW
-- [x] SLLIW
-- [x] SRLIW
-- [x] SRAIW
-- [x] ADDW
-- [x] SUBW
-- [x] SLLW
-- [x] SRLW
-- [x] SRAW
 
