@@ -12,11 +12,6 @@
 
 namespace riscv {
 
-enum class CPUStepState {
-	RUNNING,
-	HALTED,
-};
-
 enum class CPUException {
 	INSTRUCTION_ACCESS_FAULT,
 	INSTRUCTION_ADDRESS_MISALIGNED,
