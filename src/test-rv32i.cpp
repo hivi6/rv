@@ -56,7 +56,8 @@ int main(int argc, const char **argv) {
 		auto success = cpu.step();
 		if (!success) {
 			auto err = success.error();
-			std::cerr << "ERROR: " << err.msg << std::endl;
+			std::cerr << "CPUException: " << static_cast<int>(err) 
+				<< std::endl;
 			return 1;
 		}
 

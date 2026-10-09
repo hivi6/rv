@@ -17,152 +17,133 @@ enum class CPUStepState {
 	HALTED,
 };
 
-enum class CPUErrorType {
+enum class CPUException {
 	INSTRUCTION_ACCESS_FAULT,
+	INSTRUCTION_ADDRESS_MISALIGNED,
 	INVALID_INSTRUCTION,
 	UNSUPPORTED_INSTRUCTION,
 	UNEXECUTED_INSTRUCTION,
-	INSTRUCTION_ADDRESS_MISALIGNED,
 	LOAD_ACCESS_FAULT,
 	STORE_ACCESS_FAULT,
 	ENVIRONMENT_CALL,
 	ENVIRONMENT_BREAK,
 };
 
-struct CPUError {
-	CPUErrorType type;
-	std::string msg;
-
-	CPUError(CPUErrorType t, std::string m) : type{t}, msg{m} {}
-};
-
 template<RegisterType T>
 class CPU {
-	inline std::expected<T, CPUError> lui(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> lui(DecodedInstruction<T> inst) {
 		writeX(inst.rd, inst.imm);
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> auipc(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> auipc(DecodedInstruction<T> inst) {
 		writeX(inst.rd, inst.imm + pc);
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> jal(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> jal(DecodedInstruction<T> inst) {
 		const auto nextPC = pc + inst.imm;
 		if (nextPC % T{4} != 0) {
-			return std::unexpected(CPUError(
-				CPUErrorType::INSTRUCTION_ADDRESS_MISALIGNED,
-				"JAL target address is not 4-byte aligned"));
+			return std::unexpected(CPUException::INSTRUCTION_ADDRESS_MISALIGNED);
 		}
 
 		writeX(inst.rd, pc + 4);
 		return nextPC;
 	}
 
-	inline std::expected<T, CPUError> jalr(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> jalr(DecodedInstruction<T> inst) {
 		const auto nextPC = (readX(inst.rs1) + inst.imm) & ~T{1};
 		if (nextPC % T{4} != 0) {
-			return std::unexpected(CPUError(
-				CPUErrorType::INSTRUCTION_ADDRESS_MISALIGNED,
-				"JALR target address is not 4-byte aligned"));
+			return std::unexpected(CPUException::INSTRUCTION_ADDRESS_MISALIGNED);
 		}
 
 		writeX(inst.rd, pc + 4);
 		return nextPC;
 	}
 
-	inline std::expected<T, CPUError> beq(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> beq(DecodedInstruction<T> inst) {
 		const auto nextPC = (readX(inst.rs1) == readX(inst.rs2) 
 			? pc + inst.imm : pc + 4);
 
 		if (nextPC % T{4} != 0) {
-			return std::unexpected(CPUError(
-				CPUErrorType::INSTRUCTION_ADDRESS_MISALIGNED,
-				"BEQ target address is not 4-byte aligned"));
+			return std::unexpected(CPUException::INSTRUCTION_ADDRESS_MISALIGNED);
 		}
 
 		return nextPC;
 	}
 
-	inline std::expected<T, CPUError> bne(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> bne(DecodedInstruction<T> inst) {
 		const auto nextPC = (readX(inst.rs1) != readX(inst.rs2) 
 			? pc + inst.imm : pc + 4);
 
 		if (nextPC % T{4} != 0) {
-			return std::unexpected(CPUError(
-				CPUErrorType::INSTRUCTION_ADDRESS_MISALIGNED,
-				"BNE target address is not 4-byte aligned"));
+			return std::unexpected(
+				CPUException::INSTRUCTION_ADDRESS_MISALIGNED);
 		}
 
 		return nextPC;
 	}
 
-	inline std::expected<T, CPUError> blt(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> blt(DecodedInstruction<T> inst) {
 		using signT = std::make_signed_t<T>;
 		const auto lhs = std::bit_cast<signT>(readX(inst.rs1));
 		const auto rhs = std::bit_cast<signT>(readX(inst.rs2));
 		const auto nextPC = (lhs < rhs ? pc + inst.imm : pc + 4);
 
 		if (nextPC % T{4} != 0) {
-			return std::unexpected(CPUError(
-				CPUErrorType::INSTRUCTION_ADDRESS_MISALIGNED,
-				"BLT target address is not 4-byte aligned"));
+			return std::unexpected(
+				CPUException::INSTRUCTION_ADDRESS_MISALIGNED);
 		}
 
 		return nextPC;
 	}
 
-	inline std::expected<T, CPUError> bge(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> bge(DecodedInstruction<T> inst) {
 		using signT = std::make_signed_t<T>;
 		const auto lhs = std::bit_cast<signT>(readX(inst.rs1));
 		const auto rhs = std::bit_cast<signT>(readX(inst.rs2));
 		const auto nextPC = (lhs >= rhs ? pc + inst.imm : pc + 4);
 
 		if (nextPC % T{4} != 0) {
-			return std::unexpected(CPUError(
-				CPUErrorType::INSTRUCTION_ADDRESS_MISALIGNED,
-				"BGE target address is not 4-byte aligned"));
+			return std::unexpected(
+				CPUException::INSTRUCTION_ADDRESS_MISALIGNED);
 		}
 
 		return nextPC;
 	}
 
-	inline std::expected<T, CPUError> bltu(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> bltu(DecodedInstruction<T> inst) {
 		const auto lhs = readX(inst.rs1);
 		const auto rhs = readX(inst.rs2);
 		const auto nextPC = (lhs < rhs ? pc + inst.imm : pc + 4);
 
 		if (nextPC % T{4} != 0) {
-			return std::unexpected(CPUError(
-				CPUErrorType::INSTRUCTION_ADDRESS_MISALIGNED,
-				"BLTU target address is not 4-byte aligned"));
+			return std::unexpected(
+				CPUException::INSTRUCTION_ADDRESS_MISALIGNED);
 		}
 
 		return nextPC;
 	}
 
-	inline std::expected<T, CPUError> bgeu(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> bgeu(DecodedInstruction<T> inst) {
 		const auto lhs = readX(inst.rs1);
 		const auto rhs = readX(inst.rs2);
 		const auto nextPC = (lhs >= rhs ? pc + inst.imm : pc + 4);
 
 		if (nextPC % T{4} != 0) {
-			return std::unexpected(CPUError(
-				CPUErrorType::INSTRUCTION_ADDRESS_MISALIGNED,
-				"BGEU target address is not 4-byte aligned"));
+			return std::unexpected(
+				CPUException::INSTRUCTION_ADDRESS_MISALIGNED);
 		}
 
 		return nextPC;
 	}
 
-	inline std::expected<T, CPUError> lb(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> lb(DecodedInstruction<T> inst) {
 		const auto address = readX(inst.rs1) + inst.imm;
 		auto busLoad = bus.load<u8>(address);
 		if (!busLoad) {
-			return std::unexpected(CPUError(
-				CPUErrorType::LOAD_ACCESS_FAULT,
-				"LB target address couldn't be loaded"));
+			return std::unexpected(
+				CPUException::LOAD_ACCESS_FAULT);
 		}
 
 		const auto res = signExtend<T>(T{*busLoad}, 8);
@@ -170,13 +151,12 @@ class CPU {
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> lh(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> lh(DecodedInstruction<T> inst) {
 		const auto address = readX(inst.rs1) + inst.imm;
 		auto busLoad = bus.load<u16>(address);
 		if (!busLoad) {
-			return std::unexpected(CPUError(
-				CPUErrorType::LOAD_ACCESS_FAULT,
-				"LH target address couldn't be loaded"));
+			return std::unexpected(
+				CPUException::LOAD_ACCESS_FAULT);
 		}
 
 		const auto res = signExtend<T>(T{*busLoad}, 16);
@@ -184,13 +164,12 @@ class CPU {
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> lw(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> lw(DecodedInstruction<T> inst) {
 		const auto address = readX(inst.rs1) + inst.imm;
 		auto busLoad = bus.load<u32>(address);
 		if (!busLoad) {
-			return std::unexpected(CPUError(
-				CPUErrorType::LOAD_ACCESS_FAULT,
-				"LW target address couldn't be loaded"));
+			return std::unexpected(
+				CPUException::LOAD_ACCESS_FAULT);
 		}
 
 		const auto res = signExtend<T>(T{*busLoad}, 32);
@@ -198,13 +177,12 @@ class CPU {
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> lbu(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> lbu(DecodedInstruction<T> inst) {
 		const auto address = readX(inst.rs1) + inst.imm;
 		auto busLoad = bus.load<u8>(address);
 		if (!busLoad) {
-			return std::unexpected(CPUError(
-				CPUErrorType::LOAD_ACCESS_FAULT,
-				"LBU target address couldn't be loaded"));
+			return std::unexpected(
+				CPUException::LOAD_ACCESS_FAULT);
 		}
 
 		const auto res = *busLoad;
@@ -212,13 +190,12 @@ class CPU {
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> lhu(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> lhu(DecodedInstruction<T> inst) {
 		const auto address = readX(inst.rs1) + inst.imm;
 		auto busLoad = bus.load<u16>(address);
 		if (!busLoad) {
-			return std::unexpected(CPUError(
-				CPUErrorType::LOAD_ACCESS_FAULT,
-				"LHU target address couldn't be loaded"));
+			return std::unexpected(
+				CPUException::LOAD_ACCESS_FAULT);
 		}
 
 		const auto res = *busLoad;
@@ -226,82 +203,79 @@ class CPU {
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> sb(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> sb(DecodedInstruction<T> inst) {
 		const auto address = readX(inst.rs1) + inst.imm;
 		auto busStore = bus.store<u8>(address, readX(inst.rs2));
 		if (!busStore) {
-			return std::unexpected(CPUError(
-				CPUErrorType::STORE_ACCESS_FAULT,
-				"SB target address couldn't be stored"));
+			return std::unexpected(
+				CPUException::STORE_ACCESS_FAULT);
 		}
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> sh(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> sh(DecodedInstruction<T> inst) {
 		const auto address = readX(inst.rs1) + inst.imm;
 		auto busStore = bus.store<u16>(address, readX(inst.rs2));
 		if (!busStore) {
-			return std::unexpected(CPUError(
-				CPUErrorType::STORE_ACCESS_FAULT,
-				"SH target address couldn't be stored"));
+			return std::unexpected(
+				CPUException::STORE_ACCESS_FAULT);
 		}
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> sw(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> sw(DecodedInstruction<T> inst) {
 		const auto address = readX(inst.rs1) + inst.imm;
 		auto busStore = bus.store<u32>(address, readX(inst.rs2));
 		if (!busStore) {
-			return std::unexpected(CPUError(
-				CPUErrorType::STORE_ACCESS_FAULT,
-				"SW target address couldn't be stored"));
+			return std::unexpected(
+				CPUException::STORE_ACCESS_FAULT);
 		}
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> addi(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> addi(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) + inst.imm);
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> xori(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> xori(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) ^ inst.imm);
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> ori(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> ori(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) | inst.imm);
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> andi(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> andi(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) & inst.imm);
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> slli(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> slli(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) << inst.shiftAmt);
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> srli(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> srli(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) >> inst.shiftAmt);
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> srai(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> srai(DecodedInstruction<T> inst) {
 		writeX(inst.rd, signExtend<T>(
 			readX(inst.rs1) >> inst.shiftAmt, 
 			xlen<T>() - inst.shiftAmt));
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> sltiu(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> sltiu(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) < inst.imm);
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> slti(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> slti(DecodedInstruction<T> inst) {
 		using signT = std::make_signed_t<T>;
 		const auto lhs = std::bit_cast<signT>(readX(inst.rs1));
 		const auto rhs = std::bit_cast<signT>(inst.imm);
@@ -309,17 +283,17 @@ class CPU {
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> add(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> add(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) + readX(inst.rs2));
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> sub(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> sub(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) - readX(inst.rs2));
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> sll(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> sll(DecodedInstruction<T> inst) {
 		// for 32 bits, only last 5 bits are used for shift amount
 		// for 64 bits, onlt last 6 bits are used for shift amount
 		const auto validMask = xlen<T>() - 1;
@@ -328,7 +302,7 @@ class CPU {
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> slt(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> slt(DecodedInstruction<T> inst) {
 		using signT = std::make_signed_t<T>;
 		const auto lhs = std::bit_cast<signT>(readX(inst.rs1));
 		const auto rhs = std::bit_cast<signT>(readX(inst.rs2));
@@ -336,17 +310,17 @@ class CPU {
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> sltu(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> sltu(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) < readX(inst.rs2));
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> _xor(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> _xor(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) ^ readX(inst.rs2));
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> srl(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> srl(DecodedInstruction<T> inst) {
 		// for 32 bits, only last 5 bits are used for shift amount
 		// for 64 bits, onlt last 6 bits are used for shift amount
 		const auto validMask = xlen<T>() - 1;
@@ -355,7 +329,7 @@ class CPU {
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> sra(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> sra(DecodedInstruction<T> inst) {
 		// for 32 bits, only last 5 bits are used for shift amount
 		// for 64 bits, onlt last 6 bits are used for shift amount
 		const auto validMask = xlen<T>() - 1;
@@ -366,17 +340,17 @@ class CPU {
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> _or(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> _or(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) | readX(inst.rs2));
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> _and(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> _and(DecodedInstruction<T> inst) {
 		writeX(inst.rd, readX(inst.rs1) & readX(inst.rs2));
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> fence(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> fence(DecodedInstruction<T> inst) {
 		// WORKAROUND: as we are just implementing a single threaded
 		// syncronise emulator so fence instructions are not required
 		// as by default memory consistency is guaranteed. Therefore,
@@ -394,45 +368,39 @@ class CPU {
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> fenceTso(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> fenceTso(DecodedInstruction<T> inst) {
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> pause(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> pause(DecodedInstruction<T> inst) {
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> ecall(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> ecall(DecodedInstruction<T> inst) {
 		// TODO: to implement ecall, we need to make sure to implement
 		// the previledge mode instructions, for now just returning
 		// an error
-		return std::unexpected(CPUError(
-			CPUErrorType::ENVIRONMENT_CALL,
-			"Environment call"));
+		return std::unexpected(CPUException::ENVIRONMENT_CALL);
 	}
 
-	inline std::expected<T, CPUError> ebreak(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> ebreak(DecodedInstruction<T> inst) {
 		// TODO: to implement ebreak, we need to make sure to implement
 		// the previledge mode instructions, for now just returning
 		// an error
-		return std::unexpected(CPUError(
-			CPUErrorType::ENVIRONMENT_BREAK,
-			"Environment break"));
+		return std::unexpected(CPUException::ENVIRONMENT_BREAK);
 	}
 
-	inline std::expected<T, CPUError> lwu(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> lwu(DecodedInstruction<T> inst) {
 		if (xlen<T>() == 32) {
-			return std::unexpected(CPUError(
-				CPUErrorType::UNSUPPORTED_INSTRUCTION,
-				"LWU not supported for r32"));
+			return std::unexpected(
+				CPUException::UNSUPPORTED_INSTRUCTION);
 		}
 
 		const auto address = readX(inst.rs1) + inst.imm;
 		auto busLoad = bus.load<u32>(address);
 		if (!busLoad) {
-			return std::unexpected(CPUError(
-				CPUErrorType::LOAD_ACCESS_FAULT,
-				"LWU target address couldn't be loaded"));
+			return std::unexpected(
+				CPUException::LOAD_ACCESS_FAULT);
 		}
 
 		const auto res = *busLoad;
@@ -440,19 +408,17 @@ class CPU {
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> ld(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> ld(DecodedInstruction<T> inst) {
 		if (xlen<T>() == 32) {
-			return std::unexpected(CPUError(
-				CPUErrorType::UNSUPPORTED_INSTRUCTION,
-				"LD not supported for r32"));
+			return std::unexpected(
+				CPUException::UNSUPPORTED_INSTRUCTION);
 		}
 
 		const auto address = readX(inst.rs1) + inst.imm;
 		auto busLoad = bus.load<u64>(address);
 		if (!busLoad) {
-			return std::unexpected(CPUError(
-				CPUErrorType::LOAD_ACCESS_FAULT,
-				"LD target address couldn't be loaded"));
+			return std::unexpected(
+				CPUException::LOAD_ACCESS_FAULT);
 		}
 
 		const auto res = signExtend<T>(*busLoad, 64);
@@ -460,28 +426,25 @@ class CPU {
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> sd(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> sd(DecodedInstruction<T> inst) {
 		if (xlen<T>() == 32) {
-			return std::unexpected(CPUError(
-				CPUErrorType::UNSUPPORTED_INSTRUCTION,
-				"SD not supported for r32"));
+			return std::unexpected(
+				CPUException::UNSUPPORTED_INSTRUCTION);
 		}
 
 		const auto address = readX(inst.rs1) + inst.imm;
 		auto busStore = bus.store<u64>(address, readX(inst.rs2));
 		if (!busStore) {
-			return std::unexpected(CPUError(
-				CPUErrorType::STORE_ACCESS_FAULT,
-				"SD target address couldn't be stored"));
+			return std::unexpected(
+				CPUException::STORE_ACCESS_FAULT);
 		}
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> addiw(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> addiw(DecodedInstruction<T> inst) {
 		if (xlen<T>() == 32) {
-			return std::unexpected(CPUError(
-				CPUErrorType::UNSUPPORTED_INSTRUCTION,
-				"ADDIW not supported for r32"));
+			return std::unexpected(
+				CPUException::UNSUPPORTED_INSTRUCTION);
 		}
 
 		const auto res = static_cast<u32>(readX(inst.rs1) + inst.imm);
@@ -489,11 +452,10 @@ class CPU {
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> slliw(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> slliw(DecodedInstruction<T> inst) {
 		if (xlen<T>() == 32) {
-			return std::unexpected(CPUError(
-				CPUErrorType::UNSUPPORTED_INSTRUCTION,
-				"SLLIW not supported for r32"));
+			return std::unexpected(
+				CPUException::UNSUPPORTED_INSTRUCTION);
 		}
 
 		const auto res = static_cast<u32>(readX(inst.rs1) << inst.imm);
@@ -501,11 +463,10 @@ class CPU {
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> srliw(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> srliw(DecodedInstruction<T> inst) {
 		if (xlen<T>() == 32) {
-			return std::unexpected(CPUError(
-				CPUErrorType::UNSUPPORTED_INSTRUCTION,
-				"SRLIW not supported for r32"));
+			return std::unexpected(
+				CPUException::UNSUPPORTED_INSTRUCTION);
 		}
 
 		const u32 word = static_cast<u32>(readX(inst.rs1));
@@ -514,11 +475,10 @@ class CPU {
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> sraiw(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> sraiw(DecodedInstruction<T> inst) {
 		if (xlen<T>() == 32) {
-			return std::unexpected(CPUError(
-				CPUErrorType::UNSUPPORTED_INSTRUCTION,
-				"SRAIW not supported for r32"));
+			return std::unexpected(
+				CPUException::UNSUPPORTED_INSTRUCTION);
 		}
 
 		const u32 word = static_cast<u32>(readX(inst.rs1));
@@ -527,11 +487,10 @@ class CPU {
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> addw(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> addw(DecodedInstruction<T> inst) {
 		if (xlen<T>() == 32) {
-			return std::unexpected(CPUError(
-				CPUErrorType::UNSUPPORTED_INSTRUCTION,
-				"ADDW not supported for r32"));
+			return std::unexpected(
+				CPUException::UNSUPPORTED_INSTRUCTION);
 		}
 
 		const auto res = static_cast<u32>(readX(inst.rs1) 
@@ -540,11 +499,10 @@ class CPU {
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> subw(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> subw(DecodedInstruction<T> inst) {
 		if (xlen<T>() == 32) {
-			return std::unexpected(CPUError(
-				CPUErrorType::UNSUPPORTED_INSTRUCTION,
-				"SUBW not supported for r32"));
+			return std::unexpected(
+				CPUException::UNSUPPORTED_INSTRUCTION);
 		}
 
 		const auto res = static_cast<u32>(readX(inst.rs1) 
@@ -553,11 +511,10 @@ class CPU {
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> sllw(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> sllw(DecodedInstruction<T> inst) {
 		if (xlen<T>() == 32) {
-			return std::unexpected(CPUError(
-				CPUErrorType::UNSUPPORTED_INSTRUCTION,
-				"SLLW not supported for r32"));
+			return std::unexpected(
+				CPUException::UNSUPPORTED_INSTRUCTION);
 		}
 
 		const auto validMask = xlen<u32>() - 1;
@@ -567,11 +524,10 @@ class CPU {
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> srlw(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> srlw(DecodedInstruction<T> inst) {
 		if (xlen<T>() == 32) {
-			return std::unexpected(CPUError(
-				CPUErrorType::UNSUPPORTED_INSTRUCTION,
-				"SRLW not supported for r32"));
+			return std::unexpected(
+				CPUException::UNSUPPORTED_INSTRUCTION);
 		}
 
 		const auto validMask = xlen<u32>() - 1;
@@ -581,11 +537,10 @@ class CPU {
 		return pc + 4;
 	}
 
-	inline std::expected<T, CPUError> sraw(DecodedInstruction<T> inst) {
+	inline std::expected<T, CPUException> sraw(DecodedInstruction<T> inst) {
 		if (xlen<T>() == 32) {
-			return std::unexpected(CPUError(
-				CPUErrorType::UNSUPPORTED_INSTRUCTION,
-				"SRAW not supported for r32"));
+			return std::unexpected(
+				CPUException::UNSUPPORTED_INSTRUCTION);
 		}
 
 		const auto validMask = xlen<u32>() - 1;
@@ -613,7 +568,7 @@ public:
 		}
 	}
 
-	std::expected<T, CPUError> execute(DecodedInstruction<T> inst) {
+	std::expected<T, CPUException> execute(DecodedInstruction<T> inst) {
 		switch (inst.type) {
 		case InstructionType::LUI:       return lui(inst);
 		case InstructionType::AUIPC:     return auipc(inst);
@@ -670,11 +625,8 @@ public:
 		case InstructionType::SRLW:      return srlw(inst);
 		case InstructionType::SRAW:      return sraw(inst);
 		default: {
-			std::string errorMsg = 
-				"instruction couldn't be executed";
-			return std::unexpected(CPUError(
-				CPUErrorType::UNEXECUTED_INSTRUCTION, 
-				errorMsg));
+			return std::unexpected(
+				CPUException::UNEXECUTED_INSTRUCTION);
 		}
 		}
 		return {};
@@ -904,17 +856,16 @@ public:
 	}
 
 
-	std::expected<u32, CPUError> fetch() {
+	std::expected<u32, CPUException> fetch() {
 		auto res = bus.load<u32>(pc);
 		if (!res) {
-			return std::unexpected(CPUError(
-				CPUErrorType::INSTRUCTION_ACCESS_FAULT,
-				"load address is outside mapped memory"));
+			return std::unexpected(
+				CPUException::INSTRUCTION_ACCESS_FAULT);
 		}
 		return *res;
 	}
 
-	std::expected<void, CPUError> step() {
+	std::expected<void, CPUException> step() {
 		auto rawInst = fetch();
 		if (!rawInst) {
 			return std::unexpected(rawInst.error());
@@ -922,10 +873,8 @@ public:
 
 		auto inst = decode(*rawInst);
 		if (inst.type == InstructionType::INVALID) {
-			std::string errorMsg = "decoding failed: " 
-				+ toHex(*rawInst);
-			return std::unexpected(CPUError(
-				CPUErrorType::INVALID_INSTRUCTION, errorMsg));
+			return std::unexpected(
+				CPUException::INVALID_INSTRUCTION);
 		}
 
 		auto res = execute(inst);
