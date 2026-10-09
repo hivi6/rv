@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 
-#include "CPU.hpp"
+#include "cpu.hpp"
 
 std::vector<riscv::u8> loadBin(std::string filepath) {
 	std::ifstream file(filepath, std::ios::binary | std::ios::ate);
